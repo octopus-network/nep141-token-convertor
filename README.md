@@ -4,88 +4,125 @@ The purpose of this contract is to provide conversion service for nep141 tokens 
 
 Contents:
 
-- [nep141-token-convertor](#nep141-token-convertor)
 - [Terminology](#terminology)
 - [Function specification](#function-specification)
-  - [create conversion pool](#create-conversion-pool)
-  - [deposit token into pool](#deposit-token-into-pool)
-  - [convert](#convert)
-  - [view functions](#view-functions)
-- [contract interface](#contract-interface)
-  - [view methods](#view-methods)
-  - [change methods](#change-methods)
-  - [ft_on_transfer](#ft_on_transfer)
 
-# Terminology
+  - [Whitelist management](#Whitelist-management)
+  - [Create conversion pool](#Create-conversion-pool)
+  - [Transfer token to contract](#Transfer-token-to-contract)
+  - [View functions](#View-functions)
+- [Contract interfaces](#Contract-interfaces)
+
+  - [Pool creator interfaces](#Pool-creator-interfaces)
+  - [Whitelist admin interfaces](#whitelist-admin-interfaces)
+  - [Types of msg field in ft_transfer_call](#Types-of-msg-field-in-ft_transfer_call)
+    - [AddLiquidity](#AddLiquidity)
+    - [Convert](#Convert)
+
+## Terminology
 
 - `nep141`:[ A standard interface for fungible tokens in near network.](https://nomicon.io/Standards/FungibleToken/Core)
 - `conversion pool`: A conversion pool contain a pair of tokens and allows user convert a kind of token to another at a certain rate.
 - `rate`: Pool creator can set converting rate when creating pool.Then user will convert token by this immutable rate in this pool.
 - `whitelist`: Pool creator can only create a conversion pool for tokens in whitelist.
 - `reversible`: By default, the conversion pool is one-way mapping which means you can only convert token A to B.But creator can select if allows user convert token reversely when creating pool which means you can both convert token A  to B or B to A.
+- `pool creator`: People who create a conversion pool.
+- `user`: People who use a conversion pool to convert tokens.
+- `admin`: People who can manage whitelist.
+- `from_token`: If a conversion pool can convert `A token` to `B token` , we use `from_token` refer to `A token`.
+- `to_token`: If a conversion pool can convert `A token` to `B token` , we use `to_token` refer to `B token`.
 
-# Function specification
+## Function specification
 
-## create conversion pool
+### Whitelist management
 
-Anyone can create a conversion pool for a pair of tokens in whitelist.When someone create a pool,he needs to set conversion rate and if pool is reversible.Pool cann't be deleted after it created.
+Because of the `nep141`'s design that different tokens can use same icon and name,we need provide a whitelist to protect user from fraud.
 
-## deposit token into pool
+In this contract,the actions that `admin` can perform are as the following:
 
-Anyone can deposit nep141 tokens into a conversion pool.And contract will check whether token address is coincident,if not,contract will refund tokens.
+- Adding some tokens into whitelist.
+- Removing some tokens from whitelist.
 
-## convert
+The contract interface refer to [whitelist admin interfaces](#whitelist-admin-interfaces).
 
-Anyone can select a conversion pool and convert a kind of token to another at a certain rate.
+### Create conversion pool
 
-## view functions
+Anyone can create a conversion pool for a pair of tokens in whitelist.When someone creates a pool,he needs to set conversion `rate` and if pool is `reversible` .Pool can't be updated `rate` and `reversible` or deleted after it created.
+
+The contract interface refer to [pool creator interfaces](#pool-creator-interfaces).
+
+### Transfer token to contract
+
+Anyone transfers token to this contract needs to specify purpose.If not, tokens will refund fully.
+
+In this contract,the purposes that are accepted as the following:
+
+- **Adding liquidity**.Anyone can transfer `nep141 token` to this contract for adding liquidity to a pool,and we have two rules for check if transferred token is meaningful:
+  - Transferred token must be `from token` or `to token`.
+  - Transferred token can be `from token` only when   `conversion pool `is `reversible`.
+- **Converting token**.Anyone can transfer `nep141 token` to this contract for converting a type of token into another.You can only transfer `from token` for converting it into `to token` unless `pool creator` set `conversion pool` `reversible`, then you can also transfer `to token` for converting it into `from token`.
+
+These functions will be implemented by nep141's interface: [ft_on_transfer](https://nomicon.io/Standards/FungibleToken/Core#reference-level-explanation). When nep141 token transfer into contract by : `ft_transfer_call`, it can be attached some information by param:  `msg` .
+
+The more detail information of `msg` field can refer to [types of msg field in ft_transfer_call](#types-of-msg-field-in-ft_transfer_call).
+
+### View functions
 
 This contract has a set of view functions for anyone to get the status detail of this contract.
 
-# contract interface
+## Contract interfaces
 
-## view methods
-
-```rust
-// get all pools by token conversion direction
-fn get_pools_by_token_direction(in_token: TokenId,out_token: TokenId )->Vec<ConversionPool>;
-```
-
-## change methods
+### Pool creator interfaces
 
 ```rust
 // create conversion pool
-fn create_conversion_pool(token_from: ValidatorId, token_to: ValidatorId,is_reversible: bool,rate: u32)
+fn create_conversion_pool(token_from: AccountId, token_to: AccountId,is_reversible: bool,rate: u32,rate_decimal: u32);
 ```
 
-## ft_on_transfer
+### Whitelist admin interfaces
 
-- Some functions wil be implemented by nep141's interface: [ft_on_transfer](https://nomicon.io/Standards/FungibleToken/Core#reference-level-explanation).When nep141 token transfer into contract by : `ft_transfer_call`, it can be attached some information by param:  `msg` .
-- So we define a enum Type `TokenTransferMessage`:
-  ```
-  pub enum TokenTransferMessage {
-  	// deposit token into conversion pool
-  	DepositIntoPool {
-  		// pool id
-  		pool_id: PoolId,
-  	},
-  	// user convert token by send ConverAction to a pool.
-  	Convert {
-  		// a group of convert action.
-  		convert_actions: Vec<ConvertAction>;
-  	}
-  }
-  
-  pub struct ConvertAction {
-      // pool id
-      pub pool_id: u64,
-      // input token
-      pub in_token: AccountId,
-      // input token amount
-      pub in_token_amount: U128,
-      // output token
-      pub out_token: AccountId,
-      // except output token amount
-      pub except_out_token_amount: U128
-  }
-  ```
+```rust
+// Extend whitelisted tokens with new tokens. Only can be called by owner.
+fn add_whitelisted_tokens(tokens: Vec<AccountId>);
+// Remove whitelisted token. Only can be called by owner.
+fn remove_whitelisted_tokens(tokens: Vec<AccountId>);
+```
+
+### Types of msg field in ft_transfer_call
+
+Some functions wil be implemented by nep141's interface: [ft_transfer_call](https://nomicon.io/Standards/FungibleToken/Core#reference-level-explanation). When nep141 token transfer into contract by : `ft_transfer_call`, it can be attached some information by param:  `msg` . Here we will define an enum type: `enum TokenTransferMessage`,and then we define some **enum items**  for different usages:
+
+#### AddLiquidity
+
+The function specification refer to [transfer token to contract](#transfer-token-to-contract)
+
+```rust
+pub enum TokenTransferMessage {
+	AddLiquidity {
+		pool_id: u64,
+	}
+}
+```
+
+#### Convert
+
+The function specification refer to [transfer token to contract](#transfer-token-to-contract)
+
+```rust
+pub enum TokenTransferMessage {
+	Convert {
+		// a group of convert action.
+		convert_actions: Vec<ConvertAction>
+	}
+}
+// user convert a type of token into another in some pool
+// user can specify except receive token id and amount.
+pub struct ConvertAction {
+    // pool id
+    pub pool_id: u64,
+    // except receive token
+    pub except_receive_token_id: AccountId,
+    // except output token amount
+    pub except_receive_token_amount: U128
+}
+```
