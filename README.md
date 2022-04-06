@@ -6,13 +6,11 @@ Contents:
 
 - [Terminology](#terminology)
 - [Function specification](#function-specification)
-
   - [Whitelist management](#Whitelist-management)
   - [Create conversion pool](#Create-conversion-pool)
   - [Transfer token to contract](#Transfer-token-to-contract)
   - [View functions](#View-functions)
 - [Contract interfaces](#Contract-interfaces)
-
   - [Pool creator interfaces](#Pool-creator-interfaces)
   - [Whitelist admin interfaces](#whitelist-admin-interfaces)
   - [Types of msg field in ft_transfer_call](#Types-of-msg-field-in-ft_transfer_call)
@@ -21,35 +19,35 @@ Contents:
 
 ## Terminology
 
-- `nep141`:[ A standard interface for fungible tokens in near network.](https://nomicon.io/Standards/FungibleToken/Core)
+- `nep141`: [A standard interface for fungible tokens in near network.](https://nomicon.io/Standards/FungibleToken/Core)
 - `conversion pool`: A conversion pool contain a pair of tokens and allows user convert a kind of token to another at a certain rate.
-- `rate`: Pool creator can set converting rate when creating pool.Then user will convert token by this immutable rate in this pool.
-- `whitelist`: Pool creator can only create a conversion pool for tokens in whitelist.
-- `reversible`: By default, the conversion pool is one-way mapping which means you can only convert token A to B.But creator can select if allows user convert token reversely when creating pool which means you can both convert token A  to B or B to A.
 - `pool creator`: People who create a conversion pool.
+- `rate`: Pool creator can set converting rate when create pool. Then user can convert tokens by this immutable rate in this pool.
+- `whitelist`: Pool creator can only create a conversion pool for tokens in whitelist.
+- `reversible`: By default, the conversion pool is one-way mapping, which means you can only convert token A to B. But when create pool, creator can also select whether users are allowed to convert token reversely, which means the users can exchange token A and token B in both directions.
 - `user`: People who use a conversion pool to convert tokens.
 - `admin`: People who can manage whitelist.
-- `from_token`: If a conversion pool can convert `A token` to `B token` , we use `from_token` refer to `A token`.
-- `to_token`: If a conversion pool can convert `A token` to `B token` , we use `to_token` refer to `B token`.
+- `from_token`: If a conversion pool can convert `token A` to `token B`, we use `from_token` refer to `token A`.
+- `to_token`: If a conversion pool can convert `token A` to `token B`, we use `to_token` refer to `token B`.
 
 ## Function specification
 
 ### Whitelist management
 
-Because of the `nep141`'s design that different tokens can use same icon and name,we need provide a whitelist to protect user from fraud.
+Based on the design of `nep141`, different tokens can use same icon and name, so we need to provide a whitelist to protect users from fraud.
 
-In this contract,the actions that `admin` can perform are as the following:
+In this contract, the actions that `admin` can perform are as the following:
 
-- Adding some tokens into whitelist.
-- Removing some tokens from whitelist.
+- Add token into whitelist.
+- Remove token from whitelist.
 
-The contract interface refer to [whitelist admin interfaces](#whitelist-admin-interfaces).
+Refer to [whitelist admin interfaces](#whitelist-admin-interfaces) for the contract interfaces.
 
 ### Create conversion pool
 
-Anyone can create a conversion pool for a pair of tokens in whitelist.When someone creates a pool,he needs to set conversion `rate` and if pool is `reversible` .Pool can't be updated `rate` and `reversible` or deleted after it created.
+Anyone can create a conversion pool for a pair of tokens in whitelist. When someone creates a pool, he needs to set conversion `rate` and whether the pool is `reversible`. The `rate` and `reversible` of the pool can't be updated or deleted after it is created.
 
-The contract interface refer to [pool creator interfaces](#pool-creator-interfaces).
+Refer to [pool creator interfaces](#pool-creator-interfaces) for the contract interfaces.
 
 ### Transfer token to contract
 
