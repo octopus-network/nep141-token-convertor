@@ -51,7 +51,7 @@ Refer to [pool creator interfaces](#pool-creator-interfaces) for the contract in
 
 ### Transfer token to contract
 
-Anyone transfers token to this contract needs to specify purpose. If not, tokens will refund fully.
+Anyone transfers token to this contract needs to specify purpose. If not, tokens will be fully refunded.
 
 In this contract, the valid purposes are as the following:
 
@@ -60,7 +60,7 @@ In this contract, the valid purposes are as the following:
   - Transferred token can be `from token` only when `conversion pool` is `reversible`.
 - `Converting token` - Anyone can transfer `nep141 token` to this contract for converting a type of token into another. Users can only transfer `from token` for converting it into `to token`. And if `pool creator` set `conversion pool` `reversible`, the users can also transfer `to token` for converting it into `from token`.
 
-These functions will be implemented by nep141's interface: [ft_on_transfer](https://nomicon.io/Standards/FungibleToken/Core#reference-level-explanation). When nep141 token is transferred into this contract by calling funtion `ft_transfer_call` of token contract, a certain information which specifies the purpose can be attached by param `msg`.
+These functions will be implemented by nep141's interface: [ft_on_transfer](https://nomicon.io/Standards/FungibleToken/Core#reference-level-explanation). When nep141 token is transferred into this contract by calling function `ft_transfer_call` of token contract, a certain information which specifies the purpose can be attached by param `msg`.
 
 Refer to [types of msg field in ft_transfer_call](#types-of-msg-field-in-ft_transfer_call) for more detail information of the `msg` field.
 
