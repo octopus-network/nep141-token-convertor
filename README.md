@@ -51,18 +51,18 @@ Refer to [pool creator interfaces](#pool-creator-interfaces) for the contract in
 
 ### Transfer token to contract
 
-Anyone transfers token to this contract needs to specify purpose.If not, tokens will refund fully.
+Anyone transfers token to this contract needs to specify purpose. If not, tokens will refund fully.
 
-In this contract,the purposes that are accepted as the following:
+In this contract, the valid purposes are as the following:
 
-- **Adding liquidity**.Anyone can transfer `nep141 token` to this contract for adding liquidity to a pool,and we have two rules for check if transferred token is meaningful:
+- `Adding liquidity` - Anyone can transfer `nep141 token` to this contract for adding liquidity to a pool. We have two rules for checking if transferred token is meaningful:
   - Transferred token must be `from token` or `to token`.
-  - Transferred token can be `from token` only when   `conversion pool `is `reversible`.
-- **Converting token**.Anyone can transfer `nep141 token` to this contract for converting a type of token into another.You can only transfer `from token` for converting it into `to token` unless `pool creator` set `conversion pool` `reversible`, then you can also transfer `to token` for converting it into `from token`.
+  - Transferred token can be `from token` only when `conversion pool` is `reversible`.
+- `Converting token` - Anyone can transfer `nep141 token` to this contract for converting a type of token into another. Users can only transfer `from token` for converting it into `to token`. And if `pool creator` set `conversion pool` `reversible`, the users can also transfer `to token` for converting it into `from token`.
 
-These functions will be implemented by nep141's interface: [ft_on_transfer](https://nomicon.io/Standards/FungibleToken/Core#reference-level-explanation). When nep141 token transfer into contract by : `ft_transfer_call`, it can be attached some information by param:  `msg` .
+These functions will be implemented by nep141's interface: [ft_on_transfer](https://nomicon.io/Standards/FungibleToken/Core#reference-level-explanation). When nep141 token is transferred into this contract by calling funtion `ft_transfer_call` of token contract, a certain information which specifies the purpose can be attached by param `msg`.
 
-The more detail information of `msg` field can refer to [types of msg field in ft_transfer_call](#types-of-msg-field-in-ft_transfer_call).
+Refer to [types of msg field in ft_transfer_call](#types-of-msg-field-in-ft_transfer_call) for more detail information of the `msg` field.
 
 ### View functions
 
