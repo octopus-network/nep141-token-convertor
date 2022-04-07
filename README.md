@@ -1,4 +1,4 @@
-# nep141-token-convertor
+# ufunep141-token-convertor
 
 The purpose of this contract is to provide conversion service for nep141 tokens in whitelist.
 
@@ -22,7 +22,7 @@ Contents:
 - `nep141`: [A standard interface for fungible tokens in near network.](https://nomicon.io/Standards/FungibleToken/Core)
 - `conversion pool`: A conversion pool contain a pair of tokens and allows user convert a kind of token to another at a certain rate.
 - `pool creator`: People who create a conversion pool.
-- `rate`: Pool creator can set converting rate when create pool. Then user can convert tokens by this immutable rate in this pool.
+- `rate`: Pool creator can set converting rate when creating pool.Then user can convert token by this immutable rate in this pool no matter what direction of conversion is.
 - `whitelist`: Pool creator can only create a conversion pool for tokens in whitelist.
 - `reversible`: By default, the conversion pool is one-way mapping, which means you can only convert token A to B. But when create pool, creator can also select whether users are allowed to convert token reversely, which means the users can exchange token A and token B in both directions.
 - `user`: People who use a conversion pool to convert tokens.
@@ -56,9 +56,14 @@ Anyone transfers token to this contract needs to specify purpose. If not, tokens
 In this contract, the valid purposes are as the following:
 
 - `Adding liquidity` - Anyone can transfer `nep141 token` to this contract for adding liquidity to a pool. We have two rules for checking if transferred token is meaningful:
+
   - Transferred token must be `from token` or `to token`.
-  - Transferred token can be `from token` only when `conversion pool` is `reversible`.
-- `Converting token` - Anyone can transfer `nep141 token` to this contract for converting a type of token into another. Users can only transfer `from token` for converting it into `to token`. And if `pool creator` set `conversion pool` `reversible`, the users can also transfer `to token` for converting it into `from token`.
+  - Transferred token can be `to token` only when `conversion pool` is `reversible`.
+- `Converting token` - Anyone can transfer `nep141 token` to this contract for converting a type of token into another.When you try to convert token,you should know two rule as the following:
+
+  - You can only transfer `from token` for converting it into `to token`. And if `pool creator` set `conversion pool` `reversible`, the users can also transfer `to token` for converting it into `from token`.
+
+  * You can specify a `minimum received amount` when you are converting.If pool can’t satisfy the `minimum received amount`,all of you transferred tokens will be fully refunded.
 
 These functions will be implemented by nep141's interface: [ft_on_transfer](https://nomicon.io/Standards/FungibleToken/Core#reference-level-explanation). When nep141 token is transferred into this contract by calling function `ft_transfer_call` of token contract, a certain information which specifies the purpose can be attached by param `msg`.
 
@@ -92,7 +97,7 @@ Some functions wil be implemented by nep141's interface: [ft_transfer_call](http
 
 #### AddLiquidity
 
-The function specification refer to [transfer token to contract](#transfer-token-to-contract)
+The function specification refer to [transfer token to contract](#transfer-token-to-contract).
 
 ```rust
 pub enum TokenTransferMessage {
@@ -104,7 +109,7 @@ pub enum TokenTransferMessage {
 
 #### Convert
 
-The function specification refer to [transfer token to contract](#transfer-token-to-contract)
+The function specification refer to [transfer token to contract](#transfer-token-to-contract).
 
 ```rust
 pub enum TokenTransferMessage {
