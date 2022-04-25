@@ -7,12 +7,6 @@ use crate::{FtMetaData, PoolId};
 
 pub trait ConvertorViewer{
 
-    fn minimum_received(&self, in_token_amount: U128, pool_id: PoolId)->U128;
-
-    fn select_best_pool(&self, in_token: AccountId,out_token: AccountId,in_token_amount: U128 )->Option<(ConversionPool,U128)> ;
-    // 根据token兑换方向获取pools
-    fn get_pools_by_token_direction(&self, in_token: AccountId,out_token: AccountId )->Vec<ConversionPool>;
-
     fn get_whitelist(&self)->Vec<FtMetaData>;
 
     fn get_pools(&self, from_index: u64, limit: u64)->Vec<ConversionPool>;
