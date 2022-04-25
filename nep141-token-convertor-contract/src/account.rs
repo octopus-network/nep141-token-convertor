@@ -98,13 +98,11 @@ impl Account {
 
 #[near_bindgen]
 impl TokenConvertor {
-    #[private]
     pub(crate) fn internal_get_account(&self, account_id: &AccountId) -> Option<Account> {
         return self.accounts.get(account_id)
             .map(|account| account.into_current(account_id));
     }
 
-    #[private]
     pub(crate) fn internal_use_account<F, R>(
         &mut self,
         account_id: &AccountId,
@@ -117,7 +115,6 @@ impl TokenConvertor {
         r
     }
 
-    #[private]
     pub(crate) fn internal_save_account(
         &mut self,
         account_id: &AccountId,

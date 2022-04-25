@@ -1,3 +1,4 @@
+use near_sdk::assert_one_yocto;
 use crate::*;
 use crate::contract_interfacs::{PoolCreatorAction};
 use crate::types::U256;
@@ -28,34 +29,39 @@ impl From<ConversionPool> for Pool {
 #[serde(crate = "near_sdk::serde")]
 pub struct ConversionPool {
     pub id: u64,
+    pub creator: AccountId,
     pub in_token: AccountId,
     pub in_token_balance: U128,
     pub out_token: AccountId,
     pub out_token_balance: U128,
     // reversible or not
     pub reversible: bool,
-    // rate for convertor
-    pub rate: u32,
-    pub rate_decimal: u32
+    // rate for convertor,
+    // for example: if 1 wNear = 0.9stNear，
+    // it should set in_token_rate = 10, out_token_rate = 9
+    pub in_token_rate: u32,
+    pub out_token_rate: u32
 }
 
 impl ConversionPool {
 
     pub fn new(id: u64,
-               from_token: AccountId,
-               to_token: AccountId,
+               creator: AccountId,
+               in_token: AccountId,
+               out_token: AccountId,
                reversible: bool,
-               rate: u32,
-               rate_decimal: u32) ->Self{
+               in_token_rate: u32,
+               out_token_rate: u32) ->Self{
         Self {
             id,
-            in_token: from_token,
+            creator,
+            in_token,
             in_token_balance: U128(0),
-            out_token: to_token,
+            out_token,
             out_token_balance: U128(0),
             reversible,
-            rate,
-            rate_decimal
+            in_token_rate,
+            out_token_rate
         }
     }
 
@@ -71,7 +77,7 @@ impl ConversionPool {
                     self.out_token_balance.0,
                     output_token_amount);
             self.deposit_from_token(input_token_amount);
-            self.withdraw_to_token(output_token_amount);
+            self.withdraw_out_token(output_token_amount);
             (self.out_token.clone(), output_token_amount)
         } else {
             let output_token_amount = self.calculate_reverse_output_token_amount(input_token_amount);
@@ -80,7 +86,7 @@ impl ConversionPool {
                     self.in_token_balance.0,
                     output_token_amount);
             self.deposit_to_token(input_token_amount);
-            self.withdraw_from_token(output_token_amount);
+            self.withdraw_in_token(output_token_amount);
             (self.in_token.clone(), output_token_amount)
         }
     }
@@ -95,14 +101,14 @@ impl ConversionPool {
         };
     }
 
-    pub fn calculate_output_token_amount(&self, input_token_amount: Balance)->Balance {
-        (U256::from(input_token_amount) * self.rate / ((10 as u64).pow(self.rate_decimal)))
-            // Panics if the number is larger than 2^128.
+    pub fn calculate_output_token_amount(&self, token_amount: Balance)->Balance {
+        (U256::from(token_amount)*U256::from(self.in_token_rate)/U256::from(self.in_token_rate))
             .as_u128()
     }
 
     pub fn calculate_reverse_output_token_amount(&self, token_amount: Balance)->Balance {
-        (U256::from(token_amount)/self.rate/((10 as u64).pow(self.rate_decimal))).as_u128()
+        (U256::from(token_amount)*U256::from(self.out_token_rate)/U256::from(self.in_token_rate))
+            .as_u128()
     }
 
     fn deposit_from_token(&mut self, deposit_balance: Balance) {
@@ -119,13 +125,13 @@ impl ConversionPool {
         self.out_token_balance =U128(new_balance);
     }
 
-    fn withdraw_from_token(&mut self, withdraw_amount: Balance) {
+    fn withdraw_in_token(&mut self, withdraw_amount: Balance) {
         assert!(self.in_token_balance.0 >=withdraw_amount,
                 "Fail to withdraw_from_token, pool balance not enough!");
         self.in_token_balance = U128(self.in_token_balance.0-withdraw_amount);
     }
 
-    fn withdraw_to_token(&mut self, withdraw_amount: Balance) {
+    fn withdraw_out_token(&mut self, withdraw_amount: Balance) {
         assert!(self.in_token_balance.0 >=withdraw_amount,
                 "Fail to withdraw_from_token, pool balance not enough!");
         self.in_token_balance = U128(self.in_token_balance.0-withdraw_amount);
@@ -196,24 +202,47 @@ impl PoolCreatorAction for TokenConvertor {
 
     #[payable]
     fn create_pool(&mut self,
-                   from_token: AccountId,
-                   to_token: AccountId,
+                   in_token: AccountId,
+                   out_token: AccountId,
                    is_reversible: bool,
-                   rate: u32,
-                   rate_decimal:u32 )->u64 {
-        assert!(!from_token.eq(&to_token),"You can't create pool for same token");
-        self.assert_token_in_whitelist(&from_token);
-        self.assert_token_in_whitelist(&to_token);
+                   in_token_rate: u32,
+                   out_token_rate:u32 )->u64 {
+        assert!(!in_token.eq(&out_token),"You can't create pool for same token");
+        self.assert_token_in_whitelist(&in_token);
+        self.assert_token_in_whitelist(&out_token);
         assert_eq!(
-            self.whitelisted_tokens.get(&from_token).unwrap().decimals,
-            self.whitelisted_tokens.get(&to_token).unwrap().decimals,
+            self.whitelisted_tokens.get(&in_token).unwrap().decimals,
+            self.whitelisted_tokens.get(&out_token).unwrap().decimals,
             "tokens in a pool should have same decimals."
         );
         let prev_storage = env::storage_usage();
         let id = self.pools.len() as u64;
         self.pools.push(&Pool::Current(ConversionPool::new(
-            id.clone(), from_token.clone(), to_token.clone(), is_reversible, rate, rate_decimal)));
+            id.clone(),
+            env::predecessor_account_id(),
+            in_token.clone(),
+            out_token.clone(),
+            is_reversible,
+            in_token_rate,
+            out_token_rate)));
         self.internal_storage_deposit(prev_storage);
         id
+    }
+
+    #[payable]
+    fn remove_liquidity(&mut self,pool_id: PoolId, token_id: AccountId, amount: Balance) {
+        assert_one_yocto();
+        self.internal_use_pool(pool_id, |pool| {
+            assert_eq!(pool.creator,env::predecessor_account_id(),"Only creator can remove liquidity.");
+            assert!(token_id==pool.in_token||token_id==pool.out_token,"Illegal token id {}",token_id);
+            if token_id==pool.in_token {
+                // if fail, it should panic
+                pool.withdraw_in_token(amount);
+            } else {
+                pool.withdraw_out_token(amount);
+            }
+        });
+        // pool should finish withdraw here
+        self.internal_send_tokens(&env::predecessor_account_id(),&token_id,amount);
     }
 }

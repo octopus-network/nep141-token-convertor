@@ -1,4 +1,4 @@
-use near_sdk::AccountId;
+use near_sdk::{AccountId, Balance};
 use near_sdk::json_types::U128;
 use crate::account::Account;
 use crate::conversion_pool::ConversionPool;
@@ -29,6 +29,8 @@ pub trait PoolCreatorAction {
         rate: u32,
         rate_decimal: u32
     )->u64;
+
+    fn remove_liquidity(&mut self,pool_id: PoolId, token_id: AccountId, amount: Balance);
 }
 
 pub trait AdminAction {

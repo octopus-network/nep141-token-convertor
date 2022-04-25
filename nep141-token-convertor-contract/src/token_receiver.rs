@@ -15,10 +15,6 @@ pub struct ConvertAction {
     pub pool_id: u64,
     pub input_token_id: AccountId,
     pub input_token_amount: U128,
-    // except receive token
-    pub except_receive_token_id: AccountId,
-    // except output token amount
-    pub except_receive_token_amount: U128,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -44,6 +40,7 @@ impl FungibleTokenReceiver for TokenConvertor {
         match transfer_message {
             TransferMessage::AddLiquidity { pool_id } => {
                 self.internal_use_pool(pool_id, |pool| {
+                    assert_eq!(sender_id,pool.creator,"only creator can deposit token into pool.");
                     pool.add_liquidity(&token_id, amount.0);
                 });
             }
@@ -72,13 +69,13 @@ impl FungibleTokenReceiver for TokenConvertor {
 impl TokenConvertor {
     pub(crate) fn internal_send_tokens(
         &self,
-        sender_id: &AccountId,
+        receiver_id: &AccountId,
         token_id: &AccountId,
         amount: Balance,
     ) -> Promise
     {
         ext_fungible_token::ft_transfer(
-            sender_id.clone(),
+            receiver_id.clone(),
             U128(amount),
             None,
             token_id.clone(),
@@ -86,7 +83,7 @@ impl TokenConvertor {
             Gas::ONE_TERA.mul(T_GAS_FOR_FT_TRANSFER),
         ).then(ext_self::ft_transfer_resolved(
             token_id.clone(),
-            sender_id.clone(),
+            receiver_id.clone(),
             U128(amount),
             env::current_account_id(),
             0,
