@@ -4,4 +4,4 @@ use near_sdk_sim::{
 };
 use nep141_token_convertor_contract::TokenConvertorContract;
 
-pub fn deploy_prize_pool_contract(signer_account: &UserAccount, admin: Option<AccountId>)->ContractAccount<>
+// pub fn deploy_prize_pool_contract(signer_account: &UserAccount, admin: Option<AccountId>)->ContractAccount<>

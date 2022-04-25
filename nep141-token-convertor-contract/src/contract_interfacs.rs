@@ -1,15 +1,12 @@
-use near_sdk::{AccountId, Balance};
-use near_sdk::json_types::U128;
-use crate::account::Account;
 use crate::conversion_pool::ConversionPool;
 use crate::token_receiver::ConvertAction;
 use crate::{FtMetaData, PoolId};
+use near_sdk::{AccountId, Balance};
 
-pub trait ConvertorViewer{
+pub trait ConvertorViewer {
+    fn get_whitelist(&self) -> Vec<FtMetaData>;
 
-    fn get_whitelist(&self)->Vec<FtMetaData>;
-
-    fn get_pools(&self, from_index: u64, limit: u64)->Vec<ConversionPool>;
+    fn get_pools(&self, from_index: u64, limit: u64) -> Vec<ConversionPool>;
 }
 
 pub trait PoolCreatorAction {
@@ -21,10 +18,10 @@ pub trait PoolCreatorAction {
         is_reversible: bool,
         // 汇率
         rate: u32,
-        rate_decimal: u32
-    )->u64;
+        rate_decimal: u32,
+    ) -> u64;
 
-    fn remove_liquidity(&mut self,pool_id: PoolId, token_id: AccountId, amount: Balance);
+    fn remove_liquidity(&mut self, pool_id: PoolId, token_id: AccountId, amount: Balance);
 }
 
 pub trait AdminAction {

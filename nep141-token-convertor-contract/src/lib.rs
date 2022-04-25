@@ -1,26 +1,29 @@
 extern crate core;
 
-mod types;
-mod contract_interfacs;
-mod conversion_pool;
-mod token_receiver;
-mod admin;
 mod account;
+mod admin;
+mod constants;
+mod contract_interfacs;
+mod contract_viewers;
+mod conversion_pool;
 mod external_trait;
 mod storage_impl;
-mod constants;
-mod contract_viewers;
+mod token_receiver;
+mod types;
 
-use itertools::Itertools;
-use near_sdk::{assert_self,BorshStorageKey, env, ext_contract, log, near_bindgen, serde_json, AccountId, Balance, Gas, PanicOnDefault, PromiseOrValue, PromiseResult, Timestamp, StorageUsage, Promise};
-use near_sdk::collections::{LazyOption, LookupMap, UnorderedMap, UnorderedSet, Vector};
-use near_sdk::json_types::U128;
-use types::PoolId;
 use crate::account::{Account, VAccount};
 use crate::conversion_pool::Pool;
-use crate::types::{TokenDirectionKey, FtMetaData};
+use crate::types::{FtMetaData, TokenDirectionKey};
+use itertools::Itertools;
+use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
+use near_sdk::collections::{LookupMap, UnorderedMap, Vector};
+use near_sdk::json_types::U128;
 use near_sdk::serde::{Deserialize, Serialize};
-use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize, };
+use near_sdk::{
+    env, ext_contract, log, near_bindgen, serde_json, AccountId, Balance, BorshStorageKey, Gas,
+    PanicOnDefault, Promise, PromiseOrValue, PromiseResult, StorageUsage,
+};
+use types::PoolId;
 
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
@@ -36,18 +39,18 @@ pub struct TokenConvertor {
 pub(crate) enum StorageKey {
     Pools,
     Accounts,
-    WhitelistedTokens
+    WhitelistedTokens,
 }
 
 #[near_bindgen]
 impl TokenConvertor {
     #[init]
-    pub fn new(white_list_admin: AccountId) ->Self{
+    pub fn new(white_list_admin: AccountId) -> Self {
         Self {
             admin: white_list_admin,
             accounts: LookupMap::new(StorageKey::Accounts),
             pools: Vector::new(StorageKey::Pools),
-            whitelisted_tokens: UnorderedMap::new(StorageKey::WhitelistedTokens)
+            whitelisted_tokens: UnorderedMap::new(StorageKey::WhitelistedTokens),
         }
     }
 
@@ -69,16 +72,20 @@ impl TokenConvertor {
 
     #[private]
     pub(crate) fn asset_token_in_whitelist(&self, token: &AccountId) {
-        assert!(self.whitelisted_tokens.get(token).is_some(),"token {} is not in whitelist", token);
+        assert!(
+            self.whitelisted_tokens.get(token).is_some(),
+            "token {} is not in whitelist",
+            token
+        );
     }
 }
 
 #[cfg(not(target_arch = "wasm32"))]
 #[cfg(test)]
 pub mod test {
-    use near_sdk::{AccountId, testing_env, VMContext};
-    use near_sdk::test_utils::{accounts, VMContextBuilder};
     use crate::{Account, TokenConvertor};
+    use near_sdk::test_utils::{accounts, VMContextBuilder};
+    use near_sdk::{testing_env, AccountId, VMContext};
 
     pub const USDT: AccountId = AccountId::try_from("usdt.near".to_string()).unwrap();
     pub const USDC: AccountId = AccountId::try_from("usdc.near".to_string()).unwrap();

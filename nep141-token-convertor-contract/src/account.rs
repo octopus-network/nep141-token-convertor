@@ -19,9 +19,7 @@ const ACC_ID_AS_CLT_KEY_STORAGE: StorageUsage = ACC_ID_AS_KEY_STORAGE + 1;
 // + VAccount enum: 1 byte
 // + U128_STORAGE: storage_near_amount storage
 // + U32_STORAGE: tokens HashMap length
-pub const INIT_ACCOUNT_STORAGE: StorageUsage =
-    ACC_ID_AS_CLT_KEY_STORAGE + 1 + U128_STORAGE;
-
+pub const INIT_ACCOUNT_STORAGE: StorageUsage = ACC_ID_AS_CLT_KEY_STORAGE + 1 + U128_STORAGE;
 
 #[derive(BorshDeserialize, BorshSerialize)]
 pub enum VAccount {
@@ -61,14 +59,23 @@ impl Account {
     pub fn deposit_token(&mut self, token_id: &AccountId, amount: Balance) {
         self.tokens.insert(
             token_id.clone(),
-            amount+self.tokens.get(token_id).unwrap_or(&0)
+            amount + self.tokens.get(token_id).unwrap_or(&0),
         );
     }
 
     pub fn withdraw_tokens(&mut self, token_id: &AccountId, amount: Balance) {
-        let balance = *self.tokens.get(token_id).expect("Fail to withdraw nonexistent token.");
-        assert!(balance>=amount, "Fail to withdraw ft {{contract_id: {}, amount: {}}}, account balance is {}",token_id,amount, balance);
-        self.tokens.insert(token_id.clone(),balance-amount);
+        let balance = *self
+            .tokens
+            .get(token_id)
+            .expect("Fail to withdraw nonexistent token.");
+        assert!(
+            balance >= amount,
+            "Fail to withdraw ft {{contract_id: {}, amount: {}}}, account balance is {}",
+            token_id,
+            amount,
+            balance
+        );
+        self.tokens.insert(token_id.clone(), balance - amount);
     }
 
     pub fn storage_usage(&self) -> u64 {
@@ -99,17 +106,24 @@ impl Account {
 #[near_bindgen]
 impl TokenConvertor {
     pub(crate) fn internal_get_account(&self, account_id: &AccountId) -> Option<Account> {
-        return self.accounts.get(account_id)
+        return self
+            .accounts
+            .get(account_id)
             .map(|account| account.into_current(account_id));
     }
 
     pub(crate) fn internal_use_account<F, R>(
         &mut self,
         account_id: &AccountId,
-        check_deposit: bool, mut f: F) -> R
-        where F: FnMut(&mut Account) -> R
+        check_deposit: bool,
+        mut f: F,
+    ) -> R
+    where
+        F: FnMut(&mut Account) -> R,
     {
-        let mut account = self.internal_get_account(account_id).expect("No such account");
+        let mut account = self
+            .internal_get_account(account_id)
+            .expect("No such account");
         let r = f(&mut account);
         self.internal_save_account(account_id, account, check_deposit);
         r
@@ -119,10 +133,15 @@ impl TokenConvertor {
         &mut self,
         account_id: &AccountId,
         account: Account,
-        check_deposit: bool)
-    {
+        check_deposit: bool,
+    ) {
         if check_deposit {
-            assert_eq!(account.storage_debt(), 0, "Need pay {} yoctoNear  for storage debt.", account.storage_debt());
+            assert_eq!(
+                account.storage_debt(),
+                0,
+                "Need pay {} yoctoNear  for storage debt.",
+                account.storage_debt()
+            );
         }
         self.accounts.insert(account_id, &account.into());
     }

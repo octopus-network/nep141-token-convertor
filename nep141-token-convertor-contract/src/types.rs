@@ -13,8 +13,10 @@ construct_uint! {
 pub struct TokenDirectionKey(String);
 
 impl TokenDirectionKey {
-    pub fn new(from_token: &AccountId,to_token: &AccountId) -> Self {
-        Self { 0: format!("{}:{}",from_token.to_string(),to_token.to_string())}
+    pub fn new(from_token: &AccountId, to_token: &AccountId) -> Self {
+        Self {
+            0: format!("{}:{}", from_token.to_string(), to_token.to_string()),
+        }
     }
 }
 
@@ -22,5 +24,5 @@ impl TokenDirectionKey {
 #[serde(crate = "near_sdk::serde")]
 pub struct FtMetaData {
     pub token_id: AccountId,
-    pub decimals: u8
+    pub decimals: u8,
 }
