@@ -145,10 +145,10 @@ impl ConversionPool {
 
     fn withdraw_out_token(&mut self, withdraw_amount: Balance) {
         assert!(
-            self.in_token_balance.0 >= withdraw_amount,
+            self.out_token_balance.0 >= withdraw_amount,
             "Fail to withdraw_from_token, pool balance not enough!"
         );
-        self.in_token_balance = U128(self.in_token_balance.0 - withdraw_amount);
+        self.out_token_balance = U128(self.out_token_balance.0 - withdraw_amount);
     }
 
     fn check_input_token_legal(&self, token_id: &AccountId) {
@@ -175,14 +175,9 @@ impl TokenConvertor {
         input_token_id: &AccountId,
         token_amount: Balance,
     ) -> (AccountId, Balance) {
-        let mut pool = self.internal_get_pool(pool_id).expect("no such pool");
-        let x = pool.convert(input_token_id, token_amount);
-        self.internal_save_pool(pool_id, &pool.into());
-        return x;
-
-        // return self.internal_use_pool(pool_id, |pool|{
-        //     return pool.convert(input_token_id,token_amount);
-        // });
+        return self.internal_use_pool(pool_id, |pool| {
+            return pool.convert(input_token_id, token_amount);
+        });
     }
 
     #[private]
@@ -192,7 +187,7 @@ impl TokenConvertor {
     {
         let mut pool = self.internal_get_pool(pool_id).expect("No such pool");
         let r = f(&mut pool);
-        self.internal_save_pool(pool_id, &Pool::Current(pool));
+        self.internal_save_pool(pool_id, &pool.into());
         r
     }
 
