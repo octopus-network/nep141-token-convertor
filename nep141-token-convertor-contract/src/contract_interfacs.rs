@@ -1,12 +1,13 @@
 use crate::conversion_pool::ConversionPool;
 use crate::token_receiver::ConvertAction;
 use crate::{FtMetaData, PoolId};
+use near_sdk::json_types::U128;
 use near_sdk::{AccountId, Balance};
 
 pub trait ConvertorViewer {
     fn get_whitelist(&self) -> Vec<FtMetaData>;
 
-    fn get_pools(&self, from_index: u64, limit: u64) -> Vec<ConversionPool>;
+    fn get_pools(&self, from_index: u32, limit: u32) -> Vec<ConversionPool>;
 }
 
 pub trait PoolCreatorAction {
@@ -19,16 +20,19 @@ pub trait PoolCreatorAction {
         // 汇率
         rate: u32,
         rate_decimal: u32,
-    ) -> u64;
+    ) -> u32;
 
-    fn remove_liquidity(&mut self, pool_id: PoolId, token_id: AccountId, amount: Balance);
+    fn withdraw_token(&mut self, pool_id: PoolId, token_id: AccountId, amount: Balance);
+
+    fn delete_pool(&mut self, pool_id: PoolId);
 }
 
 pub trait AdminAction {
-    /// Extend whitelisted tokens with new tokens. Only can be called by owner.
     fn extend_whitelisted_tokens(&mut self, tokens: Vec<FtMetaData>);
-    /// Remove whitelisted token. Only can be called by owner.
+
     fn remove_whitelisted_tokens(&mut self, tokens: Vec<AccountId>);
+
+    fn set_pool_create_deposit_amount(&mut self, amount: U128);
 }
 
 pub trait FtOnTransferAction {

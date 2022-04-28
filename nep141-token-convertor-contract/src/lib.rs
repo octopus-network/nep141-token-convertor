@@ -29,10 +29,12 @@ use types::PoolId;
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 pub struct TokenConvertor {
     // The owner account Id
-    admin: AccountId,
-    accounts: LookupMap<AccountId, VAccount>,
-    pools: Vector<Pool>,
-    whitelisted_tokens: UnorderedMap<AccountId, FtMetaData>,
+    pub admin: AccountId,
+    pub accounts: LookupMap<AccountId, VAccount>,
+    pub pools: UnorderedMap<PoolId, Pool>,
+    pub whitelisted_tokens: UnorderedMap<AccountId, FtMetaData>,
+    pub create_pool_deposit: Balance,
+    pub pool_id: u32,
 }
 
 #[derive(BorshStorageKey, BorshSerialize)]
@@ -45,37 +47,31 @@ pub(crate) enum StorageKey {
 #[near_bindgen]
 impl TokenConvertor {
     #[init]
-    pub fn new(white_list_admin: AccountId) -> Self {
+    pub fn new(admin: AccountId) -> Self {
         Self {
-            admin: white_list_admin,
+            admin,
             accounts: LookupMap::new(StorageKey::Accounts),
-            pools: Vector::new(StorageKey::Pools),
+            pools: UnorderedMap::new(StorageKey::Pools),
             whitelisted_tokens: UnorderedMap::new(StorageKey::WhitelistedTokens),
+            create_pool_deposit: 0,
+            pool_id: 0,
         }
     }
 
-    /// Check how much storage taken costs and refund the left over back.
-    #[private]
-    pub(crate) fn internal_storage_deposit(&mut self, prev_storage: StorageUsage) {
-        let storage_cost = env::storage_usage()
-            .checked_sub(prev_storage)
-            .unwrap_or_default() as Balance
-            * env::storage_byte_cost();
-        // println!("need: {}, attached: {}", storage_cost, env::attached_deposit());
-        let refund = env::attached_deposit()
-            .checked_sub(storage_cost)
-            .expect("ERR_STORAGE_DEPOSIT");
-        if refund > 0 {
-            Promise::new(env::predecessor_account_id()).transfer(refund);
-        }
-    }
-
-    #[private]
-    pub(crate) fn asset_token_in_whitelist(&self, token: &AccountId) {
+    pub(crate) fn assert_token_in_whitelist(&self, token: &AccountId) {
         assert!(
             self.whitelisted_tokens.get(token).is_some(),
             "token {} is not in whitelist",
             token
+        );
+    }
+
+    pub(crate) fn assert_create_pool_deposit_amount(&self) {
+        assert_eq!(
+            env::attached_deposit(),
+            self.create_pool_deposit,
+            "Create pool must deposit {} yocoto near",
+            self.create_pool_deposit
         );
     }
 }

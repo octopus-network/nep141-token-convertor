@@ -4,8 +4,7 @@ use crate::*;
 
 #[near_bindgen]
 impl TokenConvertor {
-    #[private]
-    pub fn assert_admin_access(&self) {
+    pub(crate) fn assert_admin_access(&self) {
         assert_eq!(
             self.admin,
             env::predecessor_account_id(),
@@ -28,5 +27,10 @@ impl AdminAction for TokenConvertor {
         for e in tokens {
             self.whitelisted_tokens.remove(&e);
         }
+    }
+
+    fn set_pool_create_deposit_amount(&mut self, amount: U128) {
+        self.assert_admin_access();
+        self.create_pool_deposit = amount.0;
     }
 }

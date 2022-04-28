@@ -12,7 +12,7 @@ use std::ops::Mul;
 #[serde(crate = "near_sdk::serde")]
 pub struct ConvertAction {
     // pool id
-    pub pool_id: u64,
+    pub pool_id: u32,
     pub input_token_id: AccountId,
     pub input_token_amount: U128,
 }
@@ -20,7 +20,7 @@ pub struct ConvertAction {
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(crate = "near_sdk::serde")]
 pub enum TransferMessage {
-    AddLiquidity { pool_id: u64 },
+    AddLiquidity { pool_id: u32 },
     Convert { convert_action: ConvertAction },
 }
 
@@ -70,6 +70,10 @@ impl FungibleTokenReceiver for TokenConvertor {
 
 #[near_bindgen]
 impl TokenConvertor {
+    pub(crate) fn internal_send_near(&self, receiver_id: AccountId, amount: Balance) -> Promise {
+        Promise::new(receiver_id).transfer(amount)
+    }
+
     pub(crate) fn internal_send_tokens(
         &self,
         receiver_id: &AccountId,

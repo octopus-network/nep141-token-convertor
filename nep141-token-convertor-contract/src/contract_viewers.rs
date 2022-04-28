@@ -1,6 +1,7 @@
 use crate::contract_interfacs::ConvertorViewer;
 use crate::conversion_pool::ConversionPool;
 use crate::*;
+use std::convert::TryFrom;
 
 #[near_bindgen]
 impl ConvertorViewer for TokenConvertor {
@@ -8,9 +9,12 @@ impl ConvertorViewer for TokenConvertor {
         self.whitelisted_tokens.values().collect_vec()
     }
 
-    fn get_pools(&self, from_index: u64, limit: u64) -> Vec<ConversionPool> {
-        (from_index..std::cmp::min(from_index + limit, self.pools.len()))
-            .map(|index| self.internal_get_pool(index).unwrap())
+    fn get_pools(&self, from_index: u32, limit: u32) -> Vec<ConversionPool> {
+        self.pools
+            .iter()
+            .skip(from_index as usize)
+            .take(limit as usize)
+            .map(|e| e.1.into_current())
             .collect_vec()
     }
 }

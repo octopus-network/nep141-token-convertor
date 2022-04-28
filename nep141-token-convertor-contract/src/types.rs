@@ -2,7 +2,7 @@ use crate::*;
 use near_sdk::AccountId;
 use uint::construct_uint;
 
-pub type PoolId = u64;
+pub type PoolId = u32;
 
 construct_uint! {
     /// 256-bit unsigned integer.

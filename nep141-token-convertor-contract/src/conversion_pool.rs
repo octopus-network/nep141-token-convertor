@@ -26,7 +26,7 @@ impl From<ConversionPool> for Pool {
 #[derive(BorshSerialize, BorshDeserialize, Debug, Serialize, Deserialize, Clone)]
 #[serde(crate = "near_sdk::serde")]
 pub struct ConversionPool {
-    pub id: u64,
+    pub id: u32,
     pub creator: AccountId,
     pub in_token: AccountId,
     pub in_token_balance: U128,
@@ -39,17 +39,19 @@ pub struct ConversionPool {
     // it should set in_token_rate = 10, out_token_rate = 9
     pub in_token_rate: u32,
     pub out_token_rate: u32,
+    pub deposit_near_amount: U128,
 }
 
 impl ConversionPool {
     pub fn new(
-        id: u64,
+        id: u32,
         creator: AccountId,
         in_token: AccountId,
         out_token: AccountId,
         reversible: bool,
         in_token_rate: u32,
         out_token_rate: u32,
+        deposit_near_amount: U128,
     ) -> Self {
         Self {
             id,
@@ -61,6 +63,7 @@ impl ConversionPool {
             reversible,
             in_token_rate,
             out_token_rate,
+            deposit_near_amount,
         }
     }
 
@@ -180,34 +183,36 @@ impl TokenConvertor {
         });
     }
 
-    #[private]
+    pub(crate) fn internal_assign_pool_id(&mut self) -> u32 {
+        self.pool_id += 1;
+        return self.pool_id;
+    }
+
+    pub(crate) fn internal_delete_pool(&mut self, pool_id: &PoolId) {
+        self.pools.remove(pool_id);
+        log!("{} delete #{} pool", env::predecessor_account_id(), pool_id)
+    }
+
     pub(crate) fn internal_use_pool<F, R>(&mut self, pool_id: PoolId, mut f: F) -> R
     where
         F: FnMut(&mut ConversionPool) -> R,
     {
-        let mut pool = self.internal_get_pool(pool_id).expect("No such pool");
+        let mut pool = self.internal_get_pool(&pool_id).expect("No such pool");
         let r = f(&mut pool);
         self.internal_save_pool(pool_id, &pool.into());
         r
     }
 
     #[private]
-    pub(crate) fn internal_get_pool(&self, pool_id: PoolId) -> Option<ConversionPool> {
+    pub(crate) fn internal_get_pool(&self, pool_id: &PoolId) -> Option<ConversionPool> {
+        // return self.pools.get(&pool_id)
         return self.pools.get(pool_id).map(|pool| pool.into_current());
     }
 
     #[private]
     pub(crate) fn internal_save_pool(&mut self, pool_id: PoolId, pool: &Pool) {
-        self.pools.replace(pool_id, &pool);
-    }
-
-    #[private]
-    pub fn assert_token_in_whitelist(&self, token: &AccountId) {
-        assert!(
-            self.whitelisted_tokens.get(token).is_some(),
-            "token {} is not in whitelist!",
-            token
-        );
+        self.pools.insert(&pool_id, &pool);
+        // self.pools.replace(pool_id, &pool);
     }
 }
 
@@ -221,11 +226,12 @@ impl PoolCreatorAction for TokenConvertor {
         is_reversible: bool,
         in_token_rate: u32,
         out_token_rate: u32,
-    ) -> u64 {
+    ) -> u32 {
         assert!(
             !in_token.eq(&out_token),
             "You can't create pool for same token"
         );
+        self.assert_create_pool_deposit_amount();
         self.assert_token_in_whitelist(&in_token);
         self.assert_token_in_whitelist(&out_token);
         assert_eq!(
@@ -233,23 +239,25 @@ impl PoolCreatorAction for TokenConvertor {
             self.whitelisted_tokens.get(&out_token).unwrap().decimals,
             "tokens in a pool should have same decimals."
         );
-        let prev_storage = env::storage_usage();
-        let id = self.pools.len() as u64;
-        self.pools.push(&Pool::Current(ConversionPool::new(
-            id.clone(),
-            env::predecessor_account_id(),
-            in_token.clone(),
-            out_token.clone(),
-            is_reversible,
-            in_token_rate,
-            out_token_rate,
-        )));
-        self.internal_storage_deposit(prev_storage);
+        let id = self.internal_assign_pool_id();
+        self.pools.insert(
+            &id,
+            &Pool::Current(ConversionPool::new(
+                id.clone(),
+                env::predecessor_account_id(),
+                in_token.clone(),
+                out_token.clone(),
+                is_reversible,
+                in_token_rate,
+                out_token_rate,
+                U128(env::attached_deposit()),
+            )),
+        );
         id
     }
 
     #[payable]
-    fn remove_liquidity(&mut self, pool_id: PoolId, token_id: AccountId, amount: Balance) {
+    fn withdraw_token(&mut self, pool_id: PoolId, token_id: AccountId, amount: Balance) {
         assert_one_yocto();
         self.internal_use_pool(pool_id, |pool| {
             assert_eq!(
@@ -271,5 +279,26 @@ impl PoolCreatorAction for TokenConvertor {
         });
         // pool should finish withdraw here
         self.internal_send_tokens(&env::predecessor_account_id(), &token_id, amount);
+    }
+
+    fn delete_pool(&mut self, pool_id: PoolId) {
+        let pool = self
+            .internal_get_pool(&pool_id)
+            .expect("delete a not exit pool");
+        assert!(
+            env::predecessor_account_id() == pool.creator
+                || env::predecessor_account_id() == self.admin,
+            "Only admin or creator can delete pool."
+        );
+        self.internal_delete_pool(&pool_id);
+        if pool.deposit_near_amount.0 > 0 {
+            self.internal_send_near(pool.creator.clone(), pool.deposit_near_amount.0);
+        }
+        if pool.in_token_balance.0 > 0 {
+            self.internal_send_tokens(&pool.creator, &pool.in_token, pool.in_token_balance.0);
+        }
+        if pool.out_token_balance.0 > 0 {
+            self.internal_send_tokens(&pool.creator, &pool.out_token, pool.out_token_balance.0);
+        }
     }
 }
