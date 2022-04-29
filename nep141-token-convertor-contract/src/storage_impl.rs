@@ -71,7 +71,7 @@ impl StorageManagement for TokenConvertor {
                 "ERR_STORAGE_UNREGISTER_TOKENS_NOT_EMPTY"
             );
             self.accounts.remove(&account_id);
-            if account.near_amount_for_storage>0 {
+            if account.near_amount_for_storage > 0 {
                 Promise::new(account_id.clone()).transfer(account.near_amount_for_storage);
             }
             true

@@ -17,6 +17,14 @@ impl ConvertorViewer for TokenConvertor {
             .map(|e| e.1.into_current())
             .collect_vec()
     }
+
+    fn get_creator_pools(&self, account_id: AccountId) -> Vec<ConversionPool> {
+        self.pools
+            .iter()
+            .map(|e| e.1.into_current())
+            .filter(|e| e.creator == account_id)
+            .collect_vec()
+    }
 }
 
 #[cfg(not(target_arch = "wasm32"))]

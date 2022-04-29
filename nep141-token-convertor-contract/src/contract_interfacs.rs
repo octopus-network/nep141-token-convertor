@@ -8,6 +8,8 @@ pub trait ConvertorViewer {
     fn get_whitelist(&self) -> Vec<FtMetaData>;
 
     fn get_pools(&self, from_index: u32, limit: u32) -> Vec<ConversionPool>;
+
+    fn get_creator_pools(&self, account_id: AccountId) -> Vec<ConversionPool>;
 }
 
 pub trait PoolCreatorAction {
