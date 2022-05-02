@@ -1,7 +1,6 @@
 use crate::contract_interfacs::ConvertorViewer;
 use crate::conversion_pool::ConversionPool;
 use crate::*;
-use std::convert::TryFrom;
 
 #[near_bindgen]
 impl ConvertorViewer for TokenConvertor {

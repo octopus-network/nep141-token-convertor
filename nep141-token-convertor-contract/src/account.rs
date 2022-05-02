@@ -11,7 +11,6 @@ const U32_STORAGE: StorageUsage = 4;
 const ACC_ID_STORAGE: StorageUsage = 64;
 /// As a key, 4 bytes length would be added to the head
 const ACC_ID_AS_KEY_STORAGE: StorageUsage = ACC_ID_STORAGE + 4;
-const KEY_PREFIX_ACC: StorageUsage = 64;
 /// As a near_sdk::collection key, 1 byte for prefiex
 const ACC_ID_AS_CLT_KEY_STORAGE: StorageUsage = ACC_ID_AS_KEY_STORAGE + 1;
 
@@ -19,7 +18,8 @@ const ACC_ID_AS_CLT_KEY_STORAGE: StorageUsage = ACC_ID_AS_KEY_STORAGE + 1;
 // + VAccount enum: 1 byte
 // + U128_STORAGE: storage_near_amount storage
 // + U32_STORAGE: tokens HashMap length
-pub const INIT_ACCOUNT_STORAGE: StorageUsage = ACC_ID_AS_CLT_KEY_STORAGE + 1 + U128_STORAGE;
+pub const INIT_ACCOUNT_STORAGE: StorageUsage =
+    ACC_ID_AS_CLT_KEY_STORAGE + 1 + U32_STORAGE + U128_STORAGE;
 
 #[derive(BorshDeserialize, BorshSerialize)]
 pub enum VAccount {
@@ -28,6 +28,7 @@ pub enum VAccount {
 
 impl VAccount {
     /// Upgrades from other versions to the currently used version.
+    #[allow(unused)]
     pub fn into_current(self, account_id: &AccountId) -> Account {
         match self {
             VAccount::Current(account) => account,

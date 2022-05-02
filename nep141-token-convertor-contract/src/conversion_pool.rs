@@ -257,7 +257,7 @@ impl PoolCreatorAction for TokenConvertor {
     }
 
     #[payable]
-    fn withdraw_token(&mut self, pool_id: PoolId, token_id: AccountId, amount: Balance) {
+    fn withdraw_token(&mut self, pool_id: PoolId, token_id: AccountId, amount: U128) {
         assert_one_yocto();
         self.internal_use_pool(pool_id, |pool| {
             assert_eq!(
@@ -272,16 +272,18 @@ impl PoolCreatorAction for TokenConvertor {
             );
             if token_id == pool.in_token {
                 // if fail, it should panic
-                pool.withdraw_in_token(amount);
+                pool.withdraw_in_token(amount.0);
             } else {
-                pool.withdraw_out_token(amount);
+                pool.withdraw_out_token(amount.0);
             }
         });
         // pool should finish withdraw here
-        self.internal_send_tokens(&env::predecessor_account_id(), &token_id, amount);
+        self.internal_send_tokens(&env::predecessor_account_id(), &token_id, amount.0);
     }
 
+    #[payable]
     fn delete_pool(&mut self, pool_id: PoolId) {
+        assert_one_yocto();
         let pool = self
             .internal_get_pool(&pool_id)
             .expect("delete a not exit pool");

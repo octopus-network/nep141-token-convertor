@@ -16,7 +16,7 @@ impl TokenConvertor {
 #[near_bindgen]
 impl AdminAction for TokenConvertor {
     fn extend_whitelisted_tokens(&mut self, tokens: Vec<FtMetaData>) {
-        // self.assert_admin_access();
+        self.assert_admin_access();
         for token in tokens {
             self.whitelisted_tokens.insert(&token.token_id, &token);
         }

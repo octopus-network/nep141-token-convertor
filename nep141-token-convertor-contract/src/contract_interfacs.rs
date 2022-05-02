@@ -20,11 +20,11 @@ pub trait PoolCreatorAction {
         // 是否可逆
         is_reversible: bool,
         // 汇率
-        rate: u32,
-        rate_decimal: u32,
+        in_token_rate: u32,
+        out_token_rate: u32,
     ) -> u32;
 
-    fn withdraw_token(&mut self, pool_id: PoolId, token_id: AccountId, amount: Balance);
+    fn withdraw_token(&mut self, pool_id: PoolId, token_id: AccountId, amount: U128);
 
     fn delete_pool(&mut self, pool_id: PoolId);
 }

@@ -20,7 +20,17 @@ impl TokenDirectionKey {
     }
 }
 
-#[derive(BorshDeserialize, BorshSerialize, Clone, Deserialize, Serialize)]
+#[derive(
+    BorshDeserialize,
+    BorshSerialize,
+    Debug,
+    Clone,
+    Deserialize,
+    Serialize,
+    Eq,
+    PartialOrd,
+    PartialEq,
+)]
 #[serde(crate = "near_sdk::serde")]
 pub struct FtMetaData {
     pub token_id: AccountId,

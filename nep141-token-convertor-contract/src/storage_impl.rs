@@ -40,7 +40,7 @@ impl StorageManagement for TokenConvertor {
     }
 
     #[payable]
-    fn storage_withdraw(&mut self, mut amount: Option<U128>) -> StorageBalance {
+    fn storage_withdraw(&mut self, amount: Option<U128>) -> StorageBalance {
         assert_one_yocto();
         let transfer_amount: u128 =
             self.internal_use_account(&env::predecessor_account_id(), true, |account| {
