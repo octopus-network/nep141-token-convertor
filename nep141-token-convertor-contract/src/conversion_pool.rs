@@ -231,6 +231,7 @@ impl PoolCreatorAction for TokenConvertor {
         in_token_rate: u32,
         out_token_rate: u32,
     ) -> u32 {
+        self.assert_contract_is_not_paused();
         assert!(
             !in_token.eq(&out_token),
             "You can't create pool for same token"
@@ -262,6 +263,7 @@ impl PoolCreatorAction for TokenConvertor {
 
     #[payable]
     fn withdraw_token_in_pool(&mut self, pool_id: PoolId, token_id: AccountId, amount: U128) {
+        self.assert_contract_is_not_paused();
         assert_one_yocto();
         self.internal_use_pool(pool_id, |pool| {
             assert_eq!(
@@ -287,6 +289,7 @@ impl PoolCreatorAction for TokenConvertor {
 
     #[payable]
     fn delete_pool(&mut self, pool_id: PoolId) {
+        self.assert_contract_is_not_paused();
         assert_one_yocto();
         let pool = self
             .internal_get_pool(&pool_id)

@@ -36,6 +36,7 @@ pub struct TokenConvertor {
     pub create_pool_deposit: Balance,
     // auto increase id.
     pub pool_id: u32,
+    pub contract_is_paused: bool,
 }
 
 #[derive(BorshStorageKey, BorshSerialize)]
@@ -56,6 +57,7 @@ impl TokenConvertor {
             whitelisted_tokens: UnorderedMap::new(StorageKey::WhitelistedTokens),
             create_pool_deposit: 0,
             pool_id: 0,
+            contract_is_paused: false,
         }
     }
 
@@ -74,6 +76,10 @@ impl TokenConvertor {
             "Create pool must deposit {} yocoto near",
             self.create_pool_deposit
         );
+    }
+
+    pub(crate) fn assert_contract_is_not_paused(&self) {
+        assert!(!self.contract_is_paused, "contract is paused")
     }
 }
 

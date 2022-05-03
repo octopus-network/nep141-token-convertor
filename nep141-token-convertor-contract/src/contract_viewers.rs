@@ -39,6 +39,10 @@ impl ConvertorViewer for TokenConvertor {
             .expect("no such account")
             .into()
     }
+
+    fn is_contract_paused(&self) -> bool {
+        self.contract_is_paused
+    }
 }
 
 #[cfg(not(target_arch = "wasm32"))]

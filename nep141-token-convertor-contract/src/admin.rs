@@ -34,4 +34,8 @@ impl AdminAction for TokenConvertor {
         self.assert_admin_access();
         self.create_pool_deposit = amount.0;
     }
+
+    fn set_contract_is_paused(&mut self, is_paused: bool) {
+        self.contract_is_paused = is_paused
+    }
 }

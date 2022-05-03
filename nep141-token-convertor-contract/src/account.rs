@@ -147,6 +147,7 @@ impl TokenConvertor {
 impl AccountAction for TokenConvertor {
     #[payable]
     fn withdraw_token_in_account(&mut self, token_id: AccountId) {
+        self.assert_contract_is_not_paused();
         assert_one_yocto();
         let balance: u128 =
             self.internal_use_account(&env::predecessor_account_id(), false, |account| {

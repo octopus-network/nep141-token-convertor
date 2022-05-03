@@ -16,6 +16,8 @@ pub trait ConvertorViewer {
     fn get_account_storage_debt(&self, account_id: AccountId) -> U128;
 
     fn get_account(&self, account_id: AccountId) -> AccountView;
+
+    fn is_contract_paused(&self) -> bool;
 }
 
 pub trait PoolCreatorAction {
@@ -39,6 +41,8 @@ pub trait AdminAction {
     fn remove_whitelisted_tokens(&mut self, tokens: Vec<AccountId>);
 
     fn set_pool_create_deposit_amount(&mut self, amount: U128);
+
+    fn set_contract_is_paused(&mut self, is_paused: bool);
 }
 
 pub trait AccountAction {

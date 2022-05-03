@@ -35,6 +35,7 @@ impl FungibleTokenReceiver for TokenConvertor {
         amount: U128,
         msg: String,
     ) -> PromiseOrValue<U128> {
+        self.assert_contract_is_not_paused();
         let transfer_message: TransferMessage = serde_json::from_str(msg.as_str())
             .expect("Fail to deserialize msg when ft_on_transfer.");
         let token_id = env::predecessor_account_id();
