@@ -1,4 +1,4 @@
-use near_sdk::assert_one_yocto;
+use crate::account::AccountView;
 use crate::contract_interfaces::ConvertorViewer;
 use crate::conversion_pool::ConversionPool;
 use crate::*;
@@ -24,6 +24,20 @@ impl ConvertorViewer for TokenConvertor {
             .map(|e| e.1.into_current())
             .filter(|e| e.creator == account_id)
             .collect_vec()
+    }
+
+    fn get_account_storage_debt(&self, account_id: AccountId) -> U128 {
+        U128::from(
+            self.internal_get_account(&account_id)
+                .expect("no such account")
+                .storage_debt(),
+        )
+    }
+
+    fn get_account(&self, account_id: AccountId) -> AccountView {
+        self.internal_get_account(&account_id)
+            .expect("no such account")
+            .into()
     }
 }
 

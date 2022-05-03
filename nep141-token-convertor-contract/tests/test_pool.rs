@@ -1,7 +1,7 @@
 use crate::common::*;
 use crate::constant::{convertor_contract_id, string_to_account};
 use crate::contracts::{deploy_test_token_contract, setup_convertor_contract, should_failed};
-use crate::convertor::{Convertor, setup_pools};
+use crate::convertor::{setup_pools, Convertor};
 use itertools::Itertools;
 use near_sdk::json_types::U128;
 use near_sdk::serde_json::json;
@@ -10,8 +10,6 @@ use nep141_token_convertor_contract::token_receiver::TransferMessage::AddLiquidi
 use test_token::ContractContract as TestTokenContract;
 
 pub mod common;
-
-
 
 #[test]
 fn test_create_pool() {
@@ -117,5 +115,5 @@ fn test_deposit_withdraw_delete() {
     should_failed(&convertor.delete_pool(&root, 1));
     convertor.delete_pool(&creator, 1).assert_success();
     let balance = view!(token0.ft_balance_of(string_to_account("creator"))).unwrap_json::<U128>();
-    assert_eq!(100,balance.0);
+    assert_eq!(100, balance.0);
 }

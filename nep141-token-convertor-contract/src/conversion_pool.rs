@@ -5,21 +5,21 @@ use near_sdk::assert_one_yocto;
 
 #[derive(BorshSerialize, BorshDeserialize, Debug, Serialize, Deserialize, Clone)]
 #[serde(crate = "near_sdk::serde")]
-pub enum Pool {
+pub enum VPool {
     Current(ConversionPool),
 }
 
-impl Pool {
+impl VPool {
     pub fn into_current(self) -> ConversionPool {
         match self {
-            Pool::Current(pool) => pool,
+            VPool::Current(pool) => pool,
         }
     }
 }
 
-impl From<ConversionPool> for Pool {
+impl From<ConversionPool> for VPool {
     fn from(pool: ConversionPool) -> Self {
-        Pool::Current(pool)
+        VPool::Current(pool)
     }
 }
 
@@ -32,13 +32,14 @@ pub struct ConversionPool {
     pub in_token_balance: U128,
     pub out_token: AccountId,
     pub out_token_balance: U128,
-    // reversible or not
+    /// reversible or not
     pub reversible: bool,
-    // rate for convertor,
-    // for example: if 1 wNear = 0.9stNear，
-    // it should set in_token_rate = 10, out_token_rate = 9
+    /// rate for convertor,
+    /// for example: if 1 wNear = 0.9stNear，
+    /// it should set in_token_rate = 10, out_token_rate = 9
     pub in_token_rate: u32,
     pub out_token_rate: u32,
+    /// deposit near amount when creating this pool
     pub deposit_near_amount: U128,
 }
 
@@ -67,7 +68,9 @@ impl ConversionPool {
         }
     }
 
-    ///
+    /// use a pool to convert
+    /// if input token id equal pool's in_token, then it will convert input token into out_token
+    /// if input token id equal pool's out_token, then it will convert input token into in_token
     pub fn convert(
         &mut self,
         input_token_id: &AccountId,
@@ -155,6 +158,7 @@ impl ConversionPool {
     }
 
     fn check_input_token_legal(&self, token_id: &AccountId) {
+        // token must be out_token or in_token
         assert!(
             token_id.eq(&self.out_token) || token_id.eq(&self.in_token),
             "illegal input token: {},only accept {} or {}.",
@@ -162,6 +166,7 @@ impl ConversionPool {
             self.in_token,
             self.out_token
         );
+        // token can be out_token only when pool's reversible is true
         assert!(
             token_id.eq(&self.out_token) || self.reversible,
             "illegal input token {},only accept from token when pool is reversible",
@@ -209,7 +214,7 @@ impl TokenConvertor {
     }
 
     #[private]
-    pub(crate) fn internal_save_pool(&mut self, pool_id: PoolId, pool: &Pool) {
+    pub(crate) fn internal_save_pool(&mut self, pool_id: PoolId, pool: &VPool) {
         self.pools.insert(&pool_id, &pool);
         // self.pools.replace(pool_id, &pool);
     }
@@ -241,7 +246,7 @@ impl PoolCreatorAction for TokenConvertor {
         let id = self.internal_assign_pool_id();
         self.pools.insert(
             &id,
-            &Pool::Current(ConversionPool::new(
+            &VPool::Current(ConversionPool::new(
                 id.clone(),
                 env::predecessor_account_id(),
                 in_token.clone(),

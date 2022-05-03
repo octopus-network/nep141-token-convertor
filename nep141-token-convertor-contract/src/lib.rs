@@ -12,7 +12,7 @@ pub mod token_receiver;
 pub mod types;
 
 use crate::account::VAccount;
-use crate::conversion_pool::Pool;
+use crate::conversion_pool::VPool;
 pub use crate::types::{FtMetaData, TokenDirectionKey};
 use itertools::Itertools;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
@@ -28,12 +28,13 @@ use types::PoolId;
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 pub struct TokenConvertor {
-    // The owner account Id
     pub admin: AccountId,
     pub accounts: LookupMap<AccountId, VAccount>,
-    pub pools: UnorderedMap<PoolId, Pool>,
+    pub pools: UnorderedMap<PoolId, VPool>,
     pub whitelisted_tokens: UnorderedMap<AccountId, FtMetaData>,
+    // request deposit some near when creating pool.admin can change it.
     pub create_pool_deposit: Balance,
+    // auto increase id.
     pub pool_id: u32,
 }
 
@@ -79,10 +80,10 @@ impl TokenConvertor {
 #[cfg(not(target_arch = "wasm32"))]
 #[cfg(test)]
 pub mod test {
-    use std::convert::TryFrom;
     use crate::{Account, TokenConvertor};
     use near_sdk::test_utils::{accounts, VMContextBuilder};
     use near_sdk::{testing_env, AccountId, VMContext};
+    use std::convert::TryFrom;
 
     pub const USDT: AccountId = AccountId::try_from("usdt.near".to_string()).unwrap();
     pub const USDC: AccountId = AccountId::try_from("usdc.near".to_string()).unwrap();

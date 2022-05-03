@@ -29,6 +29,7 @@ impl AdminAction for TokenConvertor {
         }
     }
 
+    /// change deposit near amount when creating this pool
     fn set_pool_create_deposit_amount(&mut self, amount: U128) {
         self.assert_admin_access();
         self.create_pool_deposit = amount.0;

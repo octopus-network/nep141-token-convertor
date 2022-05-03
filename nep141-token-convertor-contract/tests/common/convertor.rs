@@ -1,13 +1,15 @@
+use crate::common::constant::{convertor_contract_id, string_to_account};
+use crate::common::contracts::{
+    deploy_test_token_contract, print_execution_result, setup_convertor_contract, NearContract,
+};
 use itertools::Itertools;
-use crate::common::contracts::{print_execution_result, NearContract, deploy_test_token_contract, setup_convertor_contract};
 use near_sdk::json_types::U128;
 use near_sdk::{AccountId, Balance};
-use near_sdk_sim::{call, view, ContractAccount, ExecutionResult, UserAccount, to_yocto};
+use near_sdk_sim::{call, to_yocto, view, ContractAccount, ExecutionResult, UserAccount};
 use nep141_token_convertor_contract::conversion_pool::ConversionPool;
 use nep141_token_convertor_contract::types::PoolId;
 use nep141_token_convertor_contract::FtMetaData;
 use nep141_token_convertor_contract::TokenConvertorContract;
-use crate::common::constant::{convertor_contract_id, string_to_account};
 use test_token::ContractContract as TestTokenContract;
 
 pub struct Convertor {
@@ -137,7 +139,6 @@ impl Convertor {
         result
     }
 }
-
 
 pub fn setup_pools() -> (
     UserAccount,

@@ -2,11 +2,11 @@ use std::collections::HashMap;
 
 use near_sdk::{assert_one_yocto, StorageUsage};
 
-use crate::*;
 use crate::contract_interfaces::AccountAction;
+use crate::*;
 
 const U128_STORAGE: StorageUsage = 16;
-const U64_STORAGE: StorageUsage = 8;
+// const U64_STORAGE: StorageUsage = 8;
 const U32_STORAGE: StorageUsage = 4;
 /// max length of account id is 64 bytes. We charge per byte.
 const ACC_ID_STORAGE: StorageUsage = 64;
@@ -15,10 +15,10 @@ const ACC_ID_AS_KEY_STORAGE: StorageUsage = ACC_ID_STORAGE + 4;
 /// As a near_sdk::collection key, 1 byte for prefiex
 const ACC_ID_AS_CLT_KEY_STORAGE: StorageUsage = ACC_ID_AS_KEY_STORAGE + 1;
 
-// ACC_ID: the Contract accounts map key length
-// + VAccount enum: 1 byte
-// + U128_STORAGE: storage_near_amount storage
-// + U32_STORAGE: tokens HashMap length
+/// ACC_ID: the Contract accounts map key length
+/// + VAccount enum: 1 byte
+/// + U128_STORAGE: storage_near_amount storage
+/// + U32_STORAGE: tokens HashMap length
 pub const INIT_ACCOUNT_STORAGE: StorageUsage =
     ACC_ID_AS_CLT_KEY_STORAGE + 1 + U32_STORAGE + U128_STORAGE;
 
@@ -29,7 +29,7 @@ pub enum VAccount {
 
 impl VAccount {
     /// Upgrades from other versions to the currently used version.
-    #[allow(unused)]
+    #[allow(unused_variables)]
     pub fn into_current(self, account_id: &AccountId) -> Account {
         match self {
             VAccount::Current(account) => account,
@@ -65,7 +65,7 @@ impl Account {
         );
     }
 
-    pub fn withdraw_all_token(&mut self, token_id: &AccountId)-> Balance {
+    pub fn withdraw_all_token(&mut self, token_id: &AccountId) -> Balance {
         let balance = *self
             .tokens
             .get(token_id)
@@ -135,7 +135,7 @@ impl TokenConvertor {
             assert_eq!(
                 account.storage_debt(),
                 0,
-                "Need pay {} yoctoNear  for storage debt.",
+                "Need pay {} yoctoNear for storage debt.",
                 account.storage_debt()
             );
         }
@@ -145,17 +145,36 @@ impl TokenConvertor {
 
 #[near_bindgen]
 impl AccountAction for TokenConvertor {
-
     #[payable]
     fn withdraw_token_in_account(&mut self, token_id: AccountId) {
         assert_one_yocto();
-        let balance: u128 = self.internal_use_account(&env::predecessor_account_id(),false,|account|{
-            return account.withdraw_all_token(&token_id);
-        });
-        if balance>0 {
-            self.internal_send_tokens(
-                &env::predecessor_account_id(),
-                &token_id,balance)
+        let balance: u128 =
+            self.internal_use_account(&env::predecessor_account_id(), false, |account| {
+                return account.withdraw_all_token(&token_id);
+            });
+        if balance > 0 {
+            self.internal_send_tokens(&env::predecessor_account_id(), &token_id, balance);
+        }
+    }
+}
+
+/// a struct for serialize Account
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(crate = "near_sdk::serde")]
+pub struct AccountView {
+    pub near_amount_for_storage: U128,
+    pub tokens: HashMap<AccountId, U128>,
+}
+
+impl From<Account> for AccountView {
+    fn from(account: Account) -> Self {
+        Self {
+            near_amount_for_storage: U128::from(account.near_amount_for_storage),
+            tokens: account
+                .tokens
+                .iter()
+                .map(|(k, v)| (k.clone(), U128::from(*v)))
+                .collect(),
         }
     }
 }

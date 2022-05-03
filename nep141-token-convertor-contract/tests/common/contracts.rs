@@ -1,5 +1,5 @@
 use crate::common::constant::*;
-use crate::common::convertor::{Convertor};
+use crate::common::convertor::Convertor;
 use near_sdk::AccountId;
 use near_sdk_sim::{
     call, deploy, init_simulator, to_yocto, ContractAccount, ExecutionResult, UserAccount,
