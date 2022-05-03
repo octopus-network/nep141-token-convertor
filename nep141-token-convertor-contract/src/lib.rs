@@ -3,7 +3,7 @@ extern crate core;
 pub mod account;
 pub mod admin;
 pub mod constants;
-pub mod contract_interfacs;
+pub mod contract_interfaces;
 pub mod contract_viewers;
 pub mod conversion_pool;
 pub mod external_trait;
@@ -79,6 +79,7 @@ impl TokenConvertor {
 #[cfg(not(target_arch = "wasm32"))]
 #[cfg(test)]
 pub mod test {
+    use std::convert::TryFrom;
     use crate::{Account, TokenConvertor};
     use near_sdk::test_utils::{accounts, VMContextBuilder};
     use near_sdk::{testing_env, AccountId, VMContext};

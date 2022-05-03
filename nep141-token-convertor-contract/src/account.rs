@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 
-use near_sdk::StorageUsage;
+use near_sdk::{assert_one_yocto, StorageUsage};
 
 use crate::*;
+use crate::contract_interfaces::AccountAction;
 
 const U128_STORAGE: StorageUsage = 16;
 const U64_STORAGE: StorageUsage = 8;
@@ -64,19 +65,13 @@ impl Account {
         );
     }
 
-    pub fn withdraw_tokens(&mut self, token_id: &AccountId, amount: Balance) {
+    pub fn withdraw_all_token(&mut self, token_id: &AccountId)-> Balance {
         let balance = *self
             .tokens
             .get(token_id)
             .expect("Fail to withdraw nonexistent token.");
-        assert!(
-            balance >= amount,
-            "Fail to withdraw ft {{contract_id: {}, amount: {}}}, account balance is {}",
-            token_id,
-            amount,
-            balance
-        );
-        self.tokens.insert(token_id.clone(), balance - amount);
+        self.tokens.remove(token_id);
+        return balance;
     }
 
     pub fn storage_usage(&self) -> u64 {
@@ -145,5 +140,22 @@ impl TokenConvertor {
             );
         }
         self.accounts.insert(account_id, &account.into());
+    }
+}
+
+#[near_bindgen]
+impl AccountAction for TokenConvertor {
+
+    #[payable]
+    fn withdraw_token_in_account(&mut self, token_id: AccountId) {
+        assert_one_yocto();
+        let balance: u128 = self.internal_use_account(&env::predecessor_account_id(),false,|account|{
+            return account.withdraw_all_token(&token_id);
+        });
+        if balance>0 {
+            self.internal_send_tokens(
+                &env::predecessor_account_id(),
+                &token_id,balance)
+        }
     }
 }

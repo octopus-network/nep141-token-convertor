@@ -1,4 +1,4 @@
-use crate::contract_interfacs::PoolCreatorAction;
+use crate::contract_interfaces::PoolCreatorAction;
 use crate::types::U256;
 use crate::*;
 use near_sdk::assert_one_yocto;
@@ -171,7 +171,6 @@ impl ConversionPool {
 }
 #[near_bindgen]
 impl TokenConvertor {
-    #[private]
     pub(crate) fn internal_convert(
         &mut self,
         pool_id: PoolId,
@@ -257,7 +256,7 @@ impl PoolCreatorAction for TokenConvertor {
     }
 
     #[payable]
-    fn withdraw_token(&mut self, pool_id: PoolId, token_id: AccountId, amount: U128) {
+    fn withdraw_token_in_pool(&mut self, pool_id: PoolId, token_id: AccountId, amount: U128) {
         assert_one_yocto();
         self.internal_use_pool(pool_id, |pool| {
             assert_eq!(

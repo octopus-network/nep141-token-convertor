@@ -1,4 +1,5 @@
-use crate::contract_interfacs::ConvertorViewer;
+use near_sdk::assert_one_yocto;
+use crate::contract_interfaces::ConvertorViewer;
 use crate::conversion_pool::ConversionPool;
 use crate::*;
 
@@ -29,7 +30,7 @@ impl ConvertorViewer for TokenConvertor {
 #[cfg(not(target_arch = "wasm32"))]
 #[cfg(test)]
 mod test_viewer {
-    use crate::contract_interfacs::{AdminAction, ConvertorViewer, PoolCreatorAction};
+    use crate::contract_interfaces::{AdminAction, ConvertorViewer, PoolCreatorAction};
     use crate::test::{setup_contract, USDC, USDT};
     use crate::FtMetaData;
     use near_contract_standards::fungible_token::receiver::FungibleTokenReceiver;

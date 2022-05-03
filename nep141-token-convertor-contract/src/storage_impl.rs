@@ -65,10 +65,9 @@ impl StorageManagement for TokenConvertor {
         assert_one_yocto();
         let account_id = env::predecessor_account_id();
         if let Some(account) = self.internal_get_account(&account_id) {
-            // todo: can't force unregister now
             assert!(
                 account.tokens.is_empty(),
-                "ERR_STORAGE_UNREGISTER_TOKENS_NOT_EMPTY"
+                "Fail to storage_unregister because "
             );
             self.accounts.remove(&account_id);
             if account.near_amount_for_storage > 0 {

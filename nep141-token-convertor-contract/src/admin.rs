@@ -1,4 +1,4 @@
-use crate::contract_interfacs::AdminAction;
+use crate::contract_interfaces::AdminAction;
 use crate::types::FtMetaData;
 use crate::*;
 
