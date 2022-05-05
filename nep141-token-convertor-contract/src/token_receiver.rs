@@ -27,7 +27,7 @@ pub enum TransferMessage {
 #[near_bindgen]
 impl FungibleTokenReceiver for TokenConvertor {
     /// Callback on receiving tokens by this contract.
-    /// `msg` format must can be deserialize `TokenReceiverMessage`.
+    /// `msg` format must can be deserialize `TransferMessage`.
     #[allow(unreachable_code)]
     fn ft_on_transfer(
         &mut self,
