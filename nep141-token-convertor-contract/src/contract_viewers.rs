@@ -26,12 +26,20 @@ impl ConvertorViewer for TokenConvertor {
             .collect_vec()
     }
 
-    fn get_account_storage_debt(&self, account_id: AccountId) -> U128 {
-        U128::from(
-            self.internal_get_account(&account_id)
-                .expect("no such account")
-                .storage_debt(),
-        )
+    /// storage fee need deposit = storage_balance_bounds.min - account.near_amount_for_storage
+    /// if account.near_amount_for_storage > storage_balance_bounds.min,it should return 0
+    fn get_storage_fee_gap_of(&self, account_id: AccountId) -> U128 {
+        let near_amount_for_storage = self
+            .internal_get_account(&account_id)
+            .map(|e| e.near_amount_for_storage)
+            .unwrap_or(0);
+        return if near_amount_for_storage
+            >= self.internal_get_storage_balance_min_bound(&account_id)
+        {
+            U128(0)
+        } else {
+            U128(self.internal_get_storage_balance_min_bound(&account_id) - near_amount_for_storage)
+        };
     }
 
     fn get_account(&self, account_id: AccountId) -> AccountView {

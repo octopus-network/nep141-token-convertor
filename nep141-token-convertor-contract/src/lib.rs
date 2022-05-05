@@ -15,6 +15,7 @@ use crate::account::VAccount;
 use crate::conversion_pool::VPool;
 pub use crate::types::{FtMetaData, TokenDirectionKey};
 use itertools::Itertools;
+use near_contract_standards::storage_management::StorageManagement;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::{LookupMap, UnorderedMap};
 use near_sdk::json_types::U128;
@@ -80,6 +81,18 @@ impl TokenConvertor {
 
     pub(crate) fn assert_contract_is_not_paused(&self) {
         assert!(!self.contract_is_paused, "contract is paused")
+    }
+
+    pub(crate) fn assert_storage_balance_bound_min(&self) {
+        let account = self
+            .internal_get_account(&env::predecessor_account_id())
+            .expect("user hasn't registered.");
+        assert!(
+            account.near_amount_for_storage
+                >= self.internal_get_storage_balance_min_bound(&env::predecessor_account_id()),
+            "Need deposit {} for storage.",
+            self.storage_balance_bounds().min.0 - account.near_amount_for_storage
+        );
     }
 }
 
