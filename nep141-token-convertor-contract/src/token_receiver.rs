@@ -81,6 +81,7 @@ impl TokenConvertor {
         token_id: &AccountId,
         amount: Balance,
     ) -> Promise {
+        self.assert_storage_balance_bound_min();
         ext_fungible_token::ft_transfer(
             receiver_id.clone(),
             U128(amount),
@@ -123,7 +124,7 @@ impl TokenConvertor {
                     .internal_get_account(&sender_id)
                     .unwrap_or(Account::new());
                 account.deposit_token(&token_id, amount.0);
-                self.internal_save_account(&sender_id, account, false);
+                self.internal_save_account(&sender_id, account);
             }
         };
     }

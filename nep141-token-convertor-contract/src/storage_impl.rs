@@ -1,4 +1,5 @@
 use crate::account::Account;
+use crate::constants::{PREPAY_STORAGE_FOR_REGISTERED, PREPAY_STORAGE_FOR_UNREGISTERED};
 use crate::*;
 use near_contract_standards::storage_management::{
     StorageBalance, StorageBalanceBounds, StorageManagement,
@@ -33,7 +34,7 @@ impl StorageManagement for TokenConvertor {
             }
         } else {
             account.near_amount_for_storage += attach_amount;
-            self.internal_save_account(&account_id, account, true);
+            self.internal_save_account(&account_id, account);
         }
 
         return self.storage_balance_of(account_id).unwrap();
@@ -43,7 +44,7 @@ impl StorageManagement for TokenConvertor {
     fn storage_withdraw(&mut self, amount: Option<U128>) -> StorageBalance {
         assert_one_yocto();
         let transfer_amount: u128 =
-            self.internal_use_account(&env::predecessor_account_id(), true, |account| {
+            self.internal_use_account(&env::predecessor_account_id(), |account| {
                 let withdraw_amount = amount
                     .map(|e| e.0)
                     .unwrap_or(account.storage_available_balance());
@@ -67,7 +68,7 @@ impl StorageManagement for TokenConvertor {
         if let Some(account) = self.internal_get_account(&account_id) {
             assert!(
                 account.tokens.is_empty(),
-                "Fail to storage_unregister because "
+                "Fail to storage_unregister because still having token in account."
             );
             self.accounts.remove(&account_id);
             if account.near_amount_for_storage > 0 {
@@ -81,7 +82,7 @@ impl StorageManagement for TokenConvertor {
 
     fn storage_balance_bounds(&self) -> StorageBalanceBounds {
         return StorageBalanceBounds {
-            min: U128(0),
+            min: U128(self.internal_get_storage_balance_min_bound(&env::predecessor_account_id())),
             max: Option::None,
         };
     }
@@ -94,5 +95,17 @@ impl StorageManagement for TokenConvertor {
                 available: U128(account.storage_available_balance()),
             }),
         }
+    }
+}
+
+impl TokenConvertor {
+    pub(crate) fn internal_get_storage_balance_min_bound(&self, account_id: &AccountId) -> u128 {
+        let account = self.internal_get_account(account_id);
+        let min_usage = if account.is_some() {
+            account.unwrap().storage_usage() + PREPAY_STORAGE_FOR_REGISTERED
+        } else {
+            PREPAY_STORAGE_FOR_UNREGISTERED
+        };
+        return min_usage as u128 * env::storage_byte_cost();
     }
 }

@@ -11,9 +11,9 @@ pub trait ConvertorViewer {
 
     fn get_creator_pools(&self, account_id: AccountId) -> Vec<ConversionPool>;
 
-    /// sometime we need to allow user to save state even if they don't have enough storage fee.
-    /// And it will product storage debt.
-    fn get_account_storage_debt(&self, account_id: AccountId) -> U128;
+    /// storage fee need deposit = storage_balance_bounds.min - account.near_amount_for_storage
+    /// if account.near_amount_for_storage > storage_balance_bounds.min,it should return 0
+    fn get_storage_fee_need_deposit(&self, account_id: AccountId) -> U128;
 
     fn get_account(&self, account_id: AccountId) -> AccountView;
 
