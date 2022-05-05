@@ -2,13 +2,12 @@ use crate::common::constant::{convertor_contract_id, string_to_account};
 use crate::common::convertor::setup_pools;
 use near_sdk::json_types::U128;
 use near_sdk::serde_json::json;
-use near_sdk_sim::{call, view, ContractAccount};
 use nep141_token_convertor_contract::token_receiver::ConvertAction;
 use nep141_token_convertor_contract::token_receiver::TransferMessage::{AddLiquidity, Convert};
-use test_token::ContractContract as TestTokenContract;
 
 pub mod common;
 
+#[allow(unused_variables)]
 #[test]
 pub fn test_convert() {
     let (root, admin, convertor, creator, user, whitelist_tokens, token_contracts) = setup_pools();
@@ -24,51 +23,55 @@ pub fn test_convert() {
         )
         .assert_success();
 
-    let token_in: &ContractAccount<TestTokenContract> = &token_contracts[0];
-    let token_out: &ContractAccount<TestTokenContract> = &token_contracts[1];
-    call!(
-        root,
-        token_in.mint(string_to_account("creator"), U128::from(100))
-    )
-    .assert_success();
+    let token_in = &token_contracts[0];
+    let token_out = &token_contracts[1];
 
-    call!(
-        creator,
-        token_in.ft_transfer_call(
+    token_in
+        .mint(&root, string_to_account("creator"), U128::from(100))
+        .assert_success();
+
+    token_in
+        .ft_transfer_call(
+            &creator,
             convertor_contract_id(),
             U128::from(10),
             Option::None,
-            json!(AddLiquidity { pool_id: 1 }).to_string()
-        ),
-        deposit = 1
-    )
-    .assert_success();
+            json!(AddLiquidity { pool_id: 1 }).to_string(),
+        )
+        .assert_success();
 
-    call!(
-        root,
-        token_out.mint(string_to_account("user"), U128::from(100))
-    )
-    .assert_success();
+    // convertor.get_pools(0,10).get(0).unwrap()
+
+    token_out
+        .mint(&root, string_to_account("user"), U128::from(100))
+        .assert_success();
+
     let convert_msg = json!(Convert {
         convert_action: ConvertAction {
             pool_id: 1,
-            input_token_id: token_out.account_id(),
+            input_token_id: token_out.contract.account_id(),
             input_token_amount: U128::from(10)
         }
     })
     .to_string();
-    call!(
-        user,
-        token_out.ft_transfer_call(
+
+    token_out
+        .ft_transfer_call(
+            &user,
             convertor_contract_id(),
             U128::from(10),
             Option::None,
-            convert_msg
-        ),
-        deposit = 1
-    )
-    .assert_success();
-    let user_token_in_balance =
-        view!(token_in.ft_balance_of(string_to_account("user"))).unwrap_json::<U128>();
-    assert_eq!(10, user_token_in_balance.0);
+            convert_msg,
+        )
+        .assert_success();
+
+    let user_token_in_balance = token_in.ft_balance_of(string_to_account("user")).0;
+    println!(
+        "user token in balance {}",
+        token_in.ft_balance_of(string_to_account("user")).0
+    );
+    assert_eq!(
+        10, user_token_in_balance,
+        "user token balance should be 10."
+    );
 }

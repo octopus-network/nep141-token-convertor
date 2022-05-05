@@ -4,10 +4,8 @@ pub use common::convertor::Convertor;
 use near_sdk::json_types::U128;
 pub use near_sdk::AccountId;
 pub use near_sdk_sim::lazy_static_include::syn::export::str;
-use near_sdk_sim::trie_key::TrieKey::Account;
 pub use near_sdk_sim::{call, deploy, init_simulator, to_yocto, view, ContractAccount};
 use nep141_token_convertor_contract::FtMetaData;
-use num_format::Locale::ro;
 
 mod common;
 

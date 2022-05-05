@@ -16,24 +16,32 @@ impl StorageManagement for TokenConvertor {
     ) -> StorageBalance {
         let attach_amount = env::attached_deposit();
         let account_id = account_id.unwrap_or(env::predecessor_account_id());
-        let registration_only = registration_only.unwrap_or(false);
-        let min_balance = self.storage_balance_bounds().min.0;
-        let already_registered = self.accounts.contains_key(&account_id);
         let mut account = self
             .internal_get_account(&account_id)
             .unwrap_or(Account::new());
-        assert!(
-            already_registered && attach_amount >= min_balance,
-            "ERR_DEPOSIT_LESS_THAN_REGISTER_NEED."
+        let registration_only = registration_only.unwrap_or(false);
+        let min_balance = self.internal_get_storage_balance_min_bound(&account_id);
+        log!(
+            "{} storage deposit {} yocto near, storage_balance_bounds.min is {}",
+            env::predecessor_account_id(),
+            env::attached_deposit(),
+            self.internal_get_storage_balance_min_bound(&account_id)
         );
+        assert!(
+            attach_amount + account.near_amount_for_storage >= min_balance,
+            "At least deposit {} yocto near.",
+            min_balance - account.near_amount_for_storage
+        );
+
+        account.near_amount_for_storage += attach_amount;
         if registration_only {
-            account.near_amount_for_storage += min_balance;
-            let refund = attach_amount - min_balance;
+            let refund = account.near_amount_for_storage - min_balance;
+            account.near_amount_for_storage = min_balance;
+            self.internal_save_account(&account_id, account);
             if refund > 0 {
                 Promise::new(env::predecessor_account_id()).transfer(refund);
             }
         } else {
-            account.near_amount_for_storage += attach_amount;
             self.internal_save_account(&account_id, account);
         }
 
@@ -48,7 +56,12 @@ impl StorageManagement for TokenConvertor {
                 let withdraw_amount = amount
                     .map(|e| e.0)
                     .unwrap_or(account.storage_available_balance());
-                assert!(withdraw_amount <= account.storage_available_balance());
+                assert!(
+                    withdraw_amount <= account.storage_available_balance(),
+                    "withdraw amount {}, but only available {}",
+                    withdraw_amount,
+                    account.storage_available_balance()
+                );
                 account.near_amount_for_storage -= withdraw_amount;
                 withdraw_amount
             });
@@ -82,7 +95,7 @@ impl StorageManagement for TokenConvertor {
 
     fn storage_balance_bounds(&self) -> StorageBalanceBounds {
         return StorageBalanceBounds {
-            min: U128(self.internal_get_storage_balance_min_bound(&env::predecessor_account_id())),
+            min: U128(PREPAY_STORAGE_FOR_UNREGISTERED as u128 * env::storage_byte_cost()),
             max: Option::None,
         };
     }

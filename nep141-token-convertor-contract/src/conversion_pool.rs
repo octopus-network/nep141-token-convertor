@@ -76,7 +76,7 @@ impl ConversionPool {
         input_token_id: &AccountId,
         input_token_amount: Balance,
     ) -> (AccountId, Balance) {
-        self.check_input_token_legal(input_token_id);
+        self.check_input_token_legal_when_converting(input_token_id);
         return if input_token_id.eq(&self.in_token) {
             let output_token_amount = self.calculate_output_token_amount(input_token_amount);
             assert!(
@@ -104,7 +104,7 @@ impl ConversionPool {
     }
 
     pub fn add_liquidity(&mut self, token_id: &AccountId, token_balance: Balance) {
-        self.check_input_token_legal(token_id);
+        self.check_input_token_legal_when_adding_liquidity(token_id);
         if token_id.eq(&self.in_token) {
             self.deposit_from_token(token_balance);
         } else {
@@ -157,7 +157,7 @@ impl ConversionPool {
         self.out_token_balance = U128(self.out_token_balance.0 - withdraw_amount);
     }
 
-    fn check_input_token_legal(&self, token_id: &AccountId) {
+    fn check_input_token_legal_when_adding_liquidity(&self, token_id: &AccountId) {
         // token must be out_token or in_token
         assert!(
             token_id.eq(&self.out_token) || token_id.eq(&self.in_token),
@@ -166,9 +166,26 @@ impl ConversionPool {
             self.in_token,
             self.out_token
         );
-        // token can be out_token only when pool's reversible is true
+        // token can only be out_token unless pool's reversible is true
         assert!(
             token_id.eq(&self.out_token) || self.reversible,
+            "illegal input token {},only accept from token when pool is reversible",
+            token_id
+        );
+    }
+
+    fn check_input_token_legal_when_converting(&self, token_id: &AccountId) {
+        // token must be out_token or in_token
+        assert!(
+            token_id.eq(&self.out_token) || token_id.eq(&self.in_token),
+            "illegal input token: {},only accept {} or {}.",
+            token_id,
+            self.in_token,
+            self.out_token
+        );
+        // token can only be in_token unless pool's reversible is true
+        assert!(
+            token_id.eq(&self.in_token) || self.reversible,
             "illegal input token {},only accept from token when pool is reversible",
             token_id
         );

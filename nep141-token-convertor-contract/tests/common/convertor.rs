@@ -2,10 +2,13 @@ use crate::common::constant::{convertor_contract_id, string_to_account};
 use crate::common::contracts::{
     deploy_test_token_contract, print_execution_result, setup_convertor_contract, NearContract,
 };
+use crate::common::nep141::Nep141;
 use itertools::Itertools;
 use near_sdk::json_types::U128;
 use near_sdk::{AccountId, Balance};
 use near_sdk_sim::{call, to_yocto, view, ContractAccount, ExecutionResult, UserAccount};
+use nep141_token_convertor_contract::account::AccountView;
+use nep141_token_convertor_contract::constants::T_GAS_FOR_RESOLVE_TRANSFER;
 use nep141_token_convertor_contract::conversion_pool::ConversionPool;
 use nep141_token_convertor_contract::types::PoolId;
 use nep141_token_convertor_contract::FtMetaData;
@@ -23,6 +26,16 @@ impl NearContract<TokenConvertorContract> for Convertor {
 }
 
 impl Convertor {
+    pub fn get_account(&self, account_id: AccountId) -> AccountView {
+        let contract = &self.contract;
+        view!(contract.get_account(account_id)).unwrap_json::<AccountView>()
+    }
+
+    pub fn get_storage_fee_gap_of(&self, account_id: AccountId) -> U128 {
+        let contract = &self.contract;
+        view!(contract.get_storage_fee_gap_of(account_id)).unwrap_json::<U128>()
+    }
+
     pub fn get_pools(&self, from_index: u32, limit: u32) -> Vec<ConversionPool> {
         let contract = &self.contract;
         view!(contract.get_pools(from_index, limit)).unwrap_json::<Vec<ConversionPool>>()
@@ -115,6 +128,18 @@ impl Convertor {
         result
     }
 
+    pub fn register_account(&self, signer: &UserAccount) -> ExecutionResult {
+        let storage_fee = self.get_storage_fee_gap_of(signer.account_id.clone()).0;
+        let contract = &self.contract;
+        let result = call!(
+            signer,
+            contract.storage_deposit(Option::None, Option::None),
+            deposit = storage_fee
+        );
+        print_execution_result(&result);
+        result
+    }
+
     pub fn withdraw_token(
         &self,
         signer: &UserAccount,
@@ -125,7 +150,7 @@ impl Convertor {
         let contract = &self.contract;
         let result = call!(
             signer,
-            contract.withdraw_token(pool_id, token_id, amount),
+            contract.withdraw_token_in_pool(pool_id, token_id, amount),
             deposit = 1
         );
         print_execution_result(&result);
@@ -147,11 +172,15 @@ pub fn setup_pools() -> (
     UserAccount,
     UserAccount,
     Vec<FtMetaData>,
-    Vec<ContractAccount<TestTokenContract>>,
+    Vec<Nep141>,
 ) {
     let (root, admin, convertor) = setup_convertor_contract();
     let creator = root.create_user(string_to_account("creator"), to_yocto("100"));
     let user = root.create_user(string_to_account("user"), to_yocto("100"));
+
+    convertor.register_account(&user).assert_success();
+    convertor.register_account(&creator).assert_success();
+
     let whitelist_tokens = vec![
         FtMetaData {
             token_id: string_to_account("usdt"),
@@ -169,8 +198,8 @@ pub fn setup_pools() -> (
     convertor.extend_whitelisted_tokens(&admin, whitelist_tokens.clone());
     let token_contracts = whitelist_tokens
         .iter()
-        .map(|e| {
-            deploy_test_token_contract(
+        .map(|e| Nep141 {
+            contract: deploy_test_token_contract(
                 &root,
                 e.token_id.clone(),
                 vec![
@@ -178,7 +207,7 @@ pub fn setup_pools() -> (
                     string_to_account("creator"),
                     string_to_account("user"),
                 ],
-            )
+            ),
         })
         .collect_vec();
 

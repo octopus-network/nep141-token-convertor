@@ -81,7 +81,7 @@ impl TokenConvertor {
         token_id: &AccountId,
         amount: Balance,
     ) -> Promise {
-        self.assert_storage_balance_bound_min();
+        self.assert_storage_balance_bound_min(receiver_id);
         ext_fungible_token::ft_transfer(
             receiver_id.clone(),
             U128(amount),
