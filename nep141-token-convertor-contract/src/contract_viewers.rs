@@ -28,7 +28,7 @@ impl ConvertorViewer for TokenConvertor {
 
     /// storage fee need deposit = storage_balance_bounds.min - account.near_amount_for_storage
     /// if account.near_amount_for_storage > storage_balance_bounds.min,it should return 0
-    fn get_storage_fee_need_deposit(&self, account_id: AccountId) -> U128 {
+    fn get_storage_fee_gap_of(&self, account_id: AccountId) -> U128 {
         let near_amount_for_storage = self
             .internal_get_account(&account_id)
             .map(|e| e.near_amount_for_storage)
