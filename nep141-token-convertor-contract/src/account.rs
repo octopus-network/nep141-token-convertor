@@ -90,7 +90,7 @@ impl TokenConvertor {
     {
         let mut account = self
             .internal_get_account(account_id)
-            .expect("No such account");
+            .expect(format!("No such account #{}.",account_id).as_str());
         let r = f(&mut account);
         self.internal_save_account(account_id, account);
         r

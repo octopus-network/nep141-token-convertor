@@ -8,6 +8,10 @@ use near_sdk::{assert_one_yocto, Promise};
 
 #[near_bindgen]
 impl StorageManagement for TokenConvertor {
+
+    /// if account_id is Option::None, it will be deposited for env::predecessor_account_id().
+    /// if registration_only is true, the near tokens that exceed internal_get_storage_balance_min_bound will be refunded.
+    /// if registration_only is false, all of the attached near tokens will be deposited.
     #[payable]
     fn storage_deposit(
         &mut self,
@@ -22,7 +26,7 @@ impl StorageManagement for TokenConvertor {
         let registration_only = registration_only.unwrap_or(false);
         let min_balance = self.internal_get_storage_balance_min_bound(&account_id);
         log!(
-            "{} storage deposit {} yocto near, storage_balance_bounds.min is {}",
+            "{} storage deposit {} yocto near, but at least deposit {} for storage.",
             env::predecessor_account_id(),
             env::attached_deposit(),
             self.internal_get_storage_balance_min_bound(&account_id)
@@ -112,9 +116,11 @@ impl StorageManagement for TokenConvertor {
 }
 
 impl TokenConvertor {
+
     pub(crate) fn internal_get_storage_balance_min_bound(&self, account_id: &AccountId) -> u128 {
         let account = self.internal_get_account(account_id);
         let min_usage = if account.is_some() {
+            // besides actually usage, need to add maximum storage cost of all change methods
             account.unwrap().storage_usage() + PREPAY_STORAGE_FOR_REGISTERED
         } else {
             PREPAY_STORAGE_FOR_UNREGISTERED
