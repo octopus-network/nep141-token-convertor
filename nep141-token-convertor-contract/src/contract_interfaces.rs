@@ -30,7 +30,14 @@ pub trait PoolCreatorAction {
         out_token_rate: u32,
     ) -> u32;
 
-    fn withdraw_token_in_pool(&mut self, pool_id: PoolId, token_id: AccountId, amount: U128);
+    /// only pool creator or admin can withdraw token in pool
+    /// if amount is Option::None, it means withdraw all
+    fn withdraw_token_in_pool(
+        &mut self,
+        pool_id: PoolId,
+        token_id: AccountId,
+        amount: Option<U128>,
+    );
 
     fn delete_pool(&mut self, pool_id: PoolId);
 }

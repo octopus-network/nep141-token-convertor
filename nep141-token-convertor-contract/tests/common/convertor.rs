@@ -145,7 +145,7 @@ impl Convertor {
         signer: &UserAccount,
         pool_id: PoolId,
         token_id: AccountId,
-        amount: U128,
+        amount: Option<U128>,
     ) -> ExecutionResult {
         let contract = &self.contract;
         let result = call!(

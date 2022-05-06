@@ -3,17 +3,6 @@ use crate::types::FtMetaData;
 use crate::*;
 
 #[near_bindgen]
-impl TokenConvertor {
-    pub(crate) fn assert_admin_access(&self) {
-        assert_eq!(
-            self.admin,
-            env::predecessor_account_id(),
-            "require admin access permission."
-        );
-    }
-}
-
-#[near_bindgen]
 impl AdminAction for TokenConvertor {
     fn extend_whitelisted_tokens(&mut self, tokens: Vec<FtMetaData>) {
         self.assert_admin_access();
