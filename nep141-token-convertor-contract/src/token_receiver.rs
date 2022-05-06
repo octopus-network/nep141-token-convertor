@@ -82,6 +82,9 @@ impl TokenConvertor {
         amount: Balance,
     ) -> Promise {
         self.assert_storage_balance_bound_min(receiver_id);
+        let ft_transfer_gas = Gas::ONE_TERA.mul(T_GAS_FOR_FT_TRANSFER);
+        let ft_transfer_resolved_gas = Gas::ONE_TERA.mul(T_GAS_FOR_RESOLVE_TRANSFER);
+        self.assert_remind_gas_greater_then(ft_transfer_gas + ft_transfer_resolved_gas);
         ext_fungible_token::ft_transfer(
             receiver_id.clone(),
             U128(amount),

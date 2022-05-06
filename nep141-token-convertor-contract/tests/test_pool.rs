@@ -98,13 +98,26 @@ fn test_deposit_withdraw_delete() {
             &creator,
             1,
             whitelist_tokens[0].token_id.clone(),
-            U128::from(5),
+            Option::None,
+        )
+        .assert_success();
+    assert_eq!(
+        0,
+        convertor.get_pools(0, 1).pop().unwrap().in_token_balance.0
+    );
+
+    convertor
+        .withdraw_token(
+            &creator,
+            1,
+            whitelist_tokens[1].token_id.clone(),
+            Option::None,
         )
         .assert_success();
 
     assert_eq!(
-        5,
-        convertor.get_pools(0, 1).pop().unwrap().in_token_balance.0
+        0,
+        convertor.get_pools(0, 1).pop().unwrap().out_token_balance.0
     );
 
     should_failed(&convertor.delete_pool(&root, 1));

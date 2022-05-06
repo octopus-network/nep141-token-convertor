@@ -94,6 +94,24 @@ impl TokenConvertor {
                 - account.near_amount_for_storage
         );
     }
+
+    pub(crate) fn assert_remind_gas_greater_then(&self, gas: Gas) {
+        let remind_gas = env::prepaid_gas() - env::used_gas();
+        assert!(
+            remind_gas > gas,
+            "Need at least {} gas to go on, but only remind {} gas",
+            gas.0,
+            remind_gas.0
+        );
+    }
+
+    pub(crate) fn assert_admin_access(&self) {
+        assert_eq!(
+            self.admin,
+            env::predecessor_account_id(),
+            "require admin access permission."
+        );
+    }
 }
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -101,7 +119,7 @@ impl TokenConvertor {
 pub mod test {
     use crate::TokenConvertor;
     use near_sdk::test_utils::{accounts, VMContextBuilder};
-    use near_sdk::{testing_env, AccountId, VMContext};
+    use near_sdk::{testing_env, AccountId};
     use std::convert::TryFrom;
 
     pub fn string_to_account(name: &str) -> AccountId {
