@@ -44,7 +44,7 @@ impl FungibleTokenReceiver for TokenConvertor {
                 self.internal_use_pool(pool_id, |pool| {
                     assert_eq!(
                         sender_id, pool.creator,
-                        "only creator can deposit token into pool."
+                        "Only creator can deposit token into pool."
                     );
                     pool.add_liquidity(&token_id, amount.0);
                 });
@@ -52,12 +52,12 @@ impl FungibleTokenReceiver for TokenConvertor {
             TransferMessage::Convert { convert_action } => {
                 assert_eq!(
                     token_id, convert_action.input_token_id,
-                    "transferred token id: {} not eq convert_action token id: {} ",
+                    "Transferred token id: {} not eq convert_action token id: {} ",
                     token_id, convert_action.input_token_id
                 );
                 assert_eq!(
                     amount, convert_action.input_token_amount,
-                    "transferred token amount: {} not eq convert_action token amount: {} ",
+                    "Transferred token amount: {} not eq convert_action token amount: {} ",
                     amount.0, convert_action.input_token_amount.0
                 );
                 let (receive_token_id, receive_token_amount) =
@@ -84,7 +84,7 @@ impl TokenConvertor {
         self.assert_storage_balance_bound_min(receiver_id);
         let ft_transfer_gas = Gas::ONE_TERA.mul(T_GAS_FOR_FT_TRANSFER);
         let ft_transfer_resolved_gas = Gas::ONE_TERA.mul(T_GAS_FOR_RESOLVE_TRANSFER);
-        self.assert_remind_gas_greater_then(ft_transfer_gas + ft_transfer_resolved_gas);
+        self.assert_remain_gas_greater_then(ft_transfer_gas + ft_transfer_resolved_gas);
         ext_fungible_token::ft_transfer(
             receiver_id.clone(),
             U128(amount),
@@ -113,7 +113,7 @@ impl TokenConvertor {
         assert_eq!(
             env::promise_results_count(),
             1,
-            "expected 1 promise result from withdraw"
+            "Expect 1 promise result from withdraw."
         );
         match env::promise_result(0) {
             PromiseResult::NotReady => unreachable!(),
@@ -122,7 +122,7 @@ impl TokenConvertor {
                 // This reverts the changes from withdraw function.
                 // If account doesn't exit, deposits to the owner's account as lostfound.
 
-                log!("Transfer token failed.Try to deposit token into account.");
+                log!("Transfer token failed. Try to deposit token into account.");
                 let mut account = self
                     .internal_get_account(&sender_id)
                     .unwrap_or(Account::new());

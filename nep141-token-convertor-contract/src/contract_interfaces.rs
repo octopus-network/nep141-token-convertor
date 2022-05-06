@@ -12,7 +12,7 @@ pub trait ConvertorViewer {
     fn get_pools_by_creator(&self, account_id: AccountId) -> Vec<ConversionPool>;
 
     /// storage fee need deposit = storage_balance_bounds.min - account.near_amount_for_storage
-    /// if account.near_amount_for_storage > storage_balance_bounds.min,it should return 0
+    /// if account.near_amount_for_storage > storage_balance_bounds.min, it should return 0
     fn get_storage_fee_gap_of(&self, account_id: AccountId) -> U128;
 
     fn get_account(&self, account_id: AccountId) -> AccountView;
