@@ -9,7 +9,7 @@ pub trait ConvertorViewer {
 
     fn get_pools(&self, from_index: u32, limit: u32) -> Vec<ConversionPool>;
 
-    fn get_creator_pools(&self, account_id: AccountId) -> Vec<ConversionPool>;
+    fn get_pools_by_creator(&self, account_id: AccountId) -> Vec<ConversionPool>;
 
     /// storage fee need deposit = storage_balance_bounds.min - account.near_amount_for_storage
     /// if account.near_amount_for_storage > storage_balance_bounds.min,it should return 0
@@ -40,9 +40,11 @@ pub trait AdminAction {
 
     fn remove_whitelisted_tokens(&mut self, tokens: Vec<AccountId>);
 
-    fn set_pool_create_deposit_amount(&mut self, amount: U128);
-
-    fn set_contract_is_paused(&mut self, is_paused: bool);
+    fn set_deposit_amount_of_pool_creation(&mut self, amount: U128);
+    ///
+    fn pause_contract(&mut self);
+    ///
+    fn resume_contract(&mut self);
 }
 
 pub trait AccountAction {

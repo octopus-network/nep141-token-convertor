@@ -66,7 +66,7 @@ impl Account {
         self.storage_usage() as u128 * env::storage_byte_cost()
     }
 
-    pub fn storage_available_balance(&self) -> Balance {
+    pub fn available_storage_deposit(&self) -> Balance {
         if self.near_amount_for_storage > self.storage_cost() {
             self.near_amount_for_storage - self.storage_cost()
         } else {

@@ -18,7 +18,7 @@ impl ConvertorViewer for TokenConvertor {
             .collect_vec()
     }
 
-    fn get_creator_pools(&self, account_id: AccountId) -> Vec<ConversionPool> {
+    fn get_pools_by_creator(&self, account_id: AccountId) -> Vec<ConversionPool> {
         self.pools
             .iter()
             .map(|e| e.1.into_current())
@@ -56,10 +56,10 @@ impl ConvertorViewer for TokenConvertor {
 #[cfg(not(target_arch = "wasm32"))]
 #[cfg(test)]
 mod test_viewer {
-    use crate::contract_interfaces::{AdminAction, ConvertorViewer, PoolCreatorAction};
-    use crate::test::{setup_contract, USDC, USDT};
-    use crate::FtMetaData;
-    use near_contract_standards::fungible_token::receiver::FungibleTokenReceiver;
-    use near_sdk::json_types::U128;
-    use near_sdk::test_utils::{accounts, VMContextBuilder};
+    // use crate::contract_interfaces::{AdminAction, ConvertorViewer, PoolCreatorAction};
+    // use crate::test::setup_contract;
+    // use crate::FtMetaData;
+    // use near_contract_standards::fungible_token::receiver::FungibleTokenReceiver;
+    // use near_sdk::json_types::U128;
+    // use near_sdk::test_utils::{accounts, VMContextBuilder};
 }

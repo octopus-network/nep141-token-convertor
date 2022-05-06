@@ -1,16 +1,15 @@
 use crate::common::*;
 use crate::constant::{convertor_contract_id, string_to_account};
-use crate::contracts::{deploy_test_token_contract, setup_convertor_contract, should_failed};
-use crate::convertor::{setup_pools, Convertor};
-use itertools::Itertools;
+use crate::contracts::should_failed;
+use crate::convertor::setup_pools;
 use near_sdk::json_types::U128;
 use near_sdk::serde_json::json;
-use near_sdk_sim::{call, to_yocto, view, ContractAccount, UserAccount};
+use near_sdk_sim::to_yocto;
 use nep141_token_convertor_contract::token_receiver::TransferMessage::AddLiquidity;
-use test_token::ContractContract as TestTokenContract;
 
 pub mod common;
 
+#[allow(unused_variables)]
 #[test]
 fn test_create_pool() {
     let (root, admin, convertor, creator, user, whitelist_tokens, token_contracts) = setup_pools();
@@ -74,24 +73,20 @@ fn test_deposit_withdraw_delete() {
         )
         .assert_success();
 
-    let token0: &ContractAccount<TestTokenContract> = &token_contracts[0];
-    call!(
-        root,
-        token0.mint(string_to_account("creator"), U128::from(100))
-    )
-    .assert_success();
+    let token0 = &token_contracts[0];
+    token0
+        .mint(&root, string_to_account("creator"), U128::from(100))
+        .assert_success();
 
-    call!(
-        creator,
-        token0.ft_transfer_call(
+    token0
+        .ft_transfer_call(
+            &creator,
             convertor_contract_id(),
             U128::from(10),
             Option::None,
-            json!(AddLiquidity { pool_id: 1 }).to_string()
-        ),
-        deposit = 1
-    )
-    .assert_success();
+            json!(AddLiquidity { pool_id: 1 }).to_string(),
+        )
+        .assert_success();
 
     assert_eq!(
         10,
@@ -114,6 +109,6 @@ fn test_deposit_withdraw_delete() {
 
     should_failed(&convertor.delete_pool(&root, 1));
     convertor.delete_pool(&creator, 1).assert_success();
-    let balance = view!(token0.ft_balance_of(string_to_account("creator"))).unwrap_json::<U128>();
+    let balance = token0.ft_balance_of(string_to_account("creator"));
     assert_eq!(100, balance.0);
 }

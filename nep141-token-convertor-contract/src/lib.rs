@@ -15,7 +15,6 @@ use crate::account::VAccount;
 use crate::conversion_pool::VPool;
 pub use crate::types::{FtMetaData, TokenDirectionKey};
 use itertools::Itertools;
-use near_contract_standards::storage_management::StorageManagement;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::{LookupMap, UnorderedMap};
 use near_sdk::json_types::U128;
@@ -74,7 +73,7 @@ impl TokenConvertor {
         assert_eq!(
             env::attached_deposit(),
             self.create_pool_deposit,
-            "Create pool must deposit {} yocoto near",
+            "Create pool must deposit {} yocto near",
             self.create_pool_deposit
         );
     }
@@ -83,15 +82,16 @@ impl TokenConvertor {
         assert!(!self.contract_is_paused, "contract is paused")
     }
 
-    pub(crate) fn assert_storage_balance_bound_min(&self) {
+    pub(crate) fn assert_storage_balance_bound_min(&self, account_id: &AccountId) {
         let account = self
-            .internal_get_account(&env::predecessor_account_id())
-            .expect("user hasn't registered.");
+            .internal_get_account(account_id)
+            .expect(format!("user {} hasn't registered.", &env::predecessor_account_id()).as_str());
         assert!(
             account.near_amount_for_storage
                 >= self.internal_get_storage_balance_min_bound(&env::predecessor_account_id()),
             "Need deposit {} for storage.",
-            self.storage_balance_bounds().min.0 - account.near_amount_for_storage
+            self.internal_get_storage_balance_min_bound(&env::predecessor_account_id())
+                - account.near_amount_for_storage
         );
     }
 }
@@ -99,18 +99,19 @@ impl TokenConvertor {
 #[cfg(not(target_arch = "wasm32"))]
 #[cfg(test)]
 pub mod test {
-    use crate::{Account, TokenConvertor};
+    use crate::TokenConvertor;
     use near_sdk::test_utils::{accounts, VMContextBuilder};
     use near_sdk::{testing_env, AccountId, VMContext};
     use std::convert::TryFrom;
 
-    pub const USDT: AccountId = AccountId::try_from("usdt.near".to_string()).unwrap();
-    pub const USDC: AccountId = AccountId::try_from("usdc.near".to_string()).unwrap();
+    pub fn string_to_account(name: &str) -> AccountId {
+        AccountId::try_from(name.to_string()).unwrap()
+    }
 
     pub fn setup_contract() -> (VMContextBuilder, TokenConvertor, AccountId) {
         let mut context = VMContextBuilder::new();
         testing_env!(context.predecessor_account_id(accounts(0)).build());
-        testing_env!(context.attached_deposit(ONE_YOCTO).build());
+        testing_env!(context.attached_deposit(1).build());
         testing_env!(context.block_timestamp(1638790720000).build());
         let whitelist_admin = AccountId::try_from("whitelist_admin.near".to_string()).unwrap();
         let contract = TokenConvertor::new(whitelist_admin.clone());
