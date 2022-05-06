@@ -18,7 +18,7 @@ impl ConvertorViewer for TokenConvertor {
             .collect_vec()
     }
 
-    fn get_creator_pools(&self, account_id: AccountId) -> Vec<ConversionPool> {
+    fn get_pools_by_creator(&self, account_id: AccountId) -> Vec<ConversionPool> {
         self.pools
             .iter()
             .map(|e| e.1.into_current())

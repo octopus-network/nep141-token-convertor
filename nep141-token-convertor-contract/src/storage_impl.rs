@@ -55,12 +55,12 @@ impl StorageManagement for TokenConvertor {
             self.internal_use_account(&env::predecessor_account_id(), |account| {
                 let withdraw_amount = amount
                     .map(|e| e.0)
-                    .unwrap_or(account.storage_available_balance());
+                    .unwrap_or(account.available_storage_deposit());
                 assert!(
-                    withdraw_amount <= account.storage_available_balance(),
+                    withdraw_amount <= account.available_storage_deposit(),
                     "withdraw amount {}, but only available {}",
                     withdraw_amount,
-                    account.storage_available_balance()
+                    account.available_storage_deposit()
                 );
                 account.near_amount_for_storage -= withdraw_amount;
                 withdraw_amount
@@ -105,7 +105,7 @@ impl StorageManagement for TokenConvertor {
             None => Option::None,
             Some(account) => Option::Some(StorageBalance {
                 total: U128(account.near_amount_for_storage),
-                available: U128(account.storage_available_balance()),
+                available: U128(account.available_storage_deposit()),
             }),
         }
     }

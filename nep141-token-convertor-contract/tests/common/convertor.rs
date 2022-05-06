@@ -81,7 +81,7 @@ impl Convertor {
     ) -> ExecutionResult {
         let contract = &self.contract;
 
-        let result = call!(signer, contract.set_pool_create_deposit_amount(amount));
+        let result = call!(signer, contract.set_deposit_amount_of_pool_creation(amount));
         print_execution_result(&result);
         result
     }

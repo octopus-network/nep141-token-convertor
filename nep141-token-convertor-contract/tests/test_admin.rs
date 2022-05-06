@@ -3,7 +3,6 @@ pub use crate::common::contracts::{deploy_convertor_contract, setup_convertor_co
 pub use common::convertor::Convertor;
 use near_sdk::json_types::U128;
 pub use near_sdk::AccountId;
-pub use near_sdk_sim::lazy_static_include::syn::export::str;
 pub use near_sdk_sim::{call, deploy, init_simulator, to_yocto, view, ContractAccount};
 use nep141_token_convertor_contract::FtMetaData;
 

@@ -1,10 +1,10 @@
 use crate::common::*;
 use crate::constant::{convertor_contract_id, string_to_account};
-use crate::contracts::{should_failed};
-use crate::convertor::{setup_pools};
+use crate::contracts::should_failed;
+use crate::convertor::setup_pools;
 use near_sdk::json_types::U128;
 use near_sdk::serde_json::json;
-use near_sdk_sim::{to_yocto};
+use near_sdk_sim::to_yocto;
 use nep141_token_convertor_contract::token_receiver::TransferMessage::AddLiquidity;
 
 pub mod common;
