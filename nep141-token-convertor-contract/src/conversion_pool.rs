@@ -335,7 +335,7 @@ impl PoolCreatorAction for TokenConvertor {
             );
             assert!(
                 token_id == pool.in_token || token_id == pool.out_token,
-                "Illegal token id {},only can withdraw {} or {}",
+                "Illegal token id {}, only can withdraw {} or {}",
                 token_id,
                 pool.in_token,
                 pool.out_token

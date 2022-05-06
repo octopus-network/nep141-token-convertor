@@ -23,10 +23,10 @@ pub const INIT_ACCOUNT_STORAGE: StorageUsage =
 
 /// Defining PREPAY_STORAGE is the maximum StorageUsage that can be occupied after any contract interfaces executing
 /// now the maximum StorageUsage is delete_pool:
-/// -if user has registered,it may add 2 entry into HashMap<AccountId, Balance>.
-/// -if user hasn't registered,it will add INIT_ACCOUNT_STORAGE.
+/// -if user has registered, it may add 2 entry into HashMap<AccountId, Balance>.
+/// -if user hasn't registered, it will add INIT_ACCOUNT_STORAGE.
 pub const PREPAY_STORAGE_FOR_REGISTERED: StorageUsage = 2 * (ACC_ID_AS_KEY_STORAGE + U128_STORAGE);
 
-/// if user haven't registered,should add INIT_ACCOUNT_STORAGE.
+/// if user haven't registered, should add INIT_ACCOUNT_STORAGE.
 pub const PREPAY_STORAGE_FOR_UNREGISTERED: StorageUsage =
     INIT_ACCOUNT_STORAGE + PREPAY_STORAGE_FOR_REGISTERED;

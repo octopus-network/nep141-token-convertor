@@ -73,19 +73,19 @@ impl TokenConvertor {
         assert_eq!(
             env::attached_deposit(),
             self.create_pool_deposit,
-            "Create pool must deposit {} yocto near",
+            "Create pool must deposit {} yocto near.",
             self.create_pool_deposit
         );
     }
 
     pub(crate) fn assert_contract_is_not_paused(&self) {
-        assert!(!self.contract_is_paused, "contract is paused")
+        assert!(!self.contract_is_paused, "contract is paused.")
     }
 
     pub(crate) fn assert_storage_balance_bound_min(&self, account_id: &AccountId) {
         let account = self
             .internal_get_account(account_id)
-            .expect(format!("user {} hasn't registered.", &env::predecessor_account_id()).as_str());
+            .expect(format!("user {} hasn't registered.", account_id).as_str());
         assert!(
             account.near_amount_for_storage
                 >= self.internal_get_storage_balance_min_bound(&env::predecessor_account_id()),
@@ -95,13 +95,13 @@ impl TokenConvertor {
         );
     }
 
-    pub(crate) fn assert_remind_gas_greater_then(&self, gas: Gas) {
-        let remind_gas = env::prepaid_gas() - env::used_gas();
+    pub(crate) fn assert_remain_gas_greater_then(&self, gas: Gas) {
+        let remain_gas = env::prepaid_gas() - env::used_gas();
         assert!(
-            remind_gas > gas,
-            "Need at least {} gas to go on, but only remind {} gas",
+            remain_gas > gas,
+            "Need at least {} gas to go on, but only remain {} gas.",
             gas.0,
-            remind_gas.0
+            remain_gas.0
         );
     }
 
