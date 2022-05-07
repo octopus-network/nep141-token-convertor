@@ -54,6 +54,7 @@ impl ConversionPool {
         out_token_rate: u32,
         deposit_near_amount: U128,
     ) -> Self {
+        assert!(in_token_rate > 0 && out_token_rate > 0, "Rate can't equal 0.");
         Self {
             id,
             creator,
@@ -112,14 +113,17 @@ impl ConversionPool {
         };
     }
 
+    /// calculate token amount when convert in_token into out_token
     pub fn calculate_output_token_amount(&self, token_amount: Balance) -> Balance {
-        (U256::from(token_amount) * U256::from(self.in_token_rate) / U256::from(self.in_token_rate))
-            .as_u128()
-    }
-
-    pub fn calculate_reverse_output_token_amount(&self, token_amount: Balance) -> Balance {
         (U256::from(token_amount) * U256::from(self.out_token_rate)
             / U256::from(self.in_token_rate))
+        .as_u128()
+    }
+
+    /// calculate token amount when convert out_token into in_token
+    pub fn calculate_reverse_output_token_amount(&self, token_amount: Balance) -> Balance {
+        (U256::from(token_amount) * U256::from(self.in_token_rate)
+            / U256::from(self.out_token_rate))
         .as_u128()
     }
 
