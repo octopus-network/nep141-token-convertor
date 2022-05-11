@@ -12,7 +12,7 @@ use std::ops::Mul;
 #[serde(crate = "near_sdk::serde")]
 pub struct ConvertAction {
     // pool id
-    pub pool_id: u32,
+    pub pool_id: PoolId,
     pub input_token_id: AccountId,
     pub input_token_amount: U128,
 }
@@ -20,7 +20,7 @@ pub struct ConvertAction {
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(crate = "near_sdk::serde")]
 pub enum TransferMessage {
-    AddLiquidity { pool_id: u32 },
+    AddLiquidity { pool_id: PoolId },
     Convert { convert_action: ConvertAction },
 }
 
@@ -76,7 +76,7 @@ impl TokenConvertor {
     }
 
     pub(crate) fn internal_send_tokens(
-        &self,
+        &mut self,
         receiver_id: &AccountId,
         token_id: &AccountId,
         amount: Balance,
@@ -84,6 +84,7 @@ impl TokenConvertor {
         self.assert_storage_balance_bound_min(receiver_id);
         let ft_transfer_gas = Gas::ONE_TERA.mul(T_GAS_FOR_FT_TRANSFER);
         let ft_transfer_resolved_gas = Gas::ONE_TERA.mul(T_GAS_FOR_RESOLVE_TRANSFER);
+        self.internal_use_account(&receiver_id, |account| account.plus_ft_transfer_lock());
         self.assert_remain_gas_greater_then(ft_transfer_gas + ft_transfer_resolved_gas);
         ext_fungible_token::ft_transfer(
             receiver_id.clone(),
@@ -117,7 +118,9 @@ impl TokenConvertor {
         );
         match env::promise_result(0) {
             PromiseResult::NotReady => unreachable!(),
-            PromiseResult::Successful(_) => {}
+            PromiseResult::Successful(_) => {
+                self.internal_use_account(&sender_id, |account| account.minus_ft_transfer_lock());
+            }
             PromiseResult::Failed => {
                 // This reverts the changes from withdraw function.
                 // If account doesn't exit, deposits to the owner's account as lostfound.
@@ -127,6 +130,7 @@ impl TokenConvertor {
                     .internal_get_account(&sender_id)
                     .unwrap_or(Account::new());
                 account.deposit_token(&token_id, amount.0);
+                account.minus_ft_transfer_lock();
                 self.internal_save_account(&sender_id, account);
             }
         };

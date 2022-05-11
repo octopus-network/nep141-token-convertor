@@ -28,7 +28,7 @@ pub trait PoolCreatorAction {
         is_reversible: bool,
         in_token_rate: u32,
         out_token_rate: u32,
-    ) -> u32;
+    ) -> PoolId;
 
     /// only pool creator or admin can withdraw token in pool
     /// if amount is Option::None, it means withdraw all

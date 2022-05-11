@@ -2,6 +2,7 @@ use crate::contract_interfaces::PoolCreatorAction;
 use crate::types::U256;
 use crate::*;
 use near_sdk::assert_one_yocto;
+use near_sdk::json_types::U64;
 
 #[derive(BorshSerialize, BorshDeserialize, Debug, Serialize, Deserialize, Clone)]
 #[serde(crate = "near_sdk::serde")]
@@ -26,7 +27,7 @@ impl From<ConversionPool> for VPool {
 #[derive(BorshSerialize, BorshDeserialize, Debug, Serialize, Deserialize, Clone)]
 #[serde(crate = "near_sdk::serde")]
 pub struct ConversionPool {
-    pub id: u32,
+    pub id: PoolId,
     pub creator: AccountId,
     pub in_token: AccountId,
     pub in_token_balance: U128,
@@ -45,7 +46,7 @@ pub struct ConversionPool {
 
 impl ConversionPool {
     pub fn new(
-        id: u32,
+        id: PoolId,
         creator: AccountId,
         in_token: AccountId,
         out_token: AccountId,
@@ -54,7 +55,10 @@ impl ConversionPool {
         out_token_rate: u32,
         deposit_near_amount: U128,
     ) -> Self {
-        assert!(in_token_rate > 0 && out_token_rate > 0, "Rate can't equal 0.");
+        assert!(
+            in_token_rate > 0 && out_token_rate > 0,
+            "Rate can't equal 0."
+        );
         Self {
             id,
             creator,
@@ -230,31 +234,35 @@ impl TokenConvertor {
         });
     }
 
-    pub(crate) fn internal_assign_pool_id(&mut self) -> u32 {
+    pub(crate) fn internal_assign_pool_id(&mut self) -> PoolId {
         self.pool_id += 1;
-        return self.pool_id;
+        return U64(self.pool_id);
     }
 
     pub(crate) fn internal_delete_pool(&mut self, pool_id: &PoolId) {
         let pool = self.internal_get_pool(&pool_id).expect(
             format!(
                 "Fail to delete #{} pool because the pool is non-existent",
-                pool_id
+                pool_id.0
             )
             .as_str(),
         );
         assert_eq!(
             pool.in_token_balance.0, 0,
             "Fail to delete #{} pool,need to withdraw in token first.",
-            pool_id
+            pool_id.0
         );
         assert_eq!(
             pool.out_token_balance.0, 0,
             "Fail to delete #{} pool,need to withdraw out token first.",
-            pool_id
+            pool_id.0
         );
         self.pools.remove(pool_id);
-        log!("{} delete #{} pool", env::predecessor_account_id(), pool_id)
+        log!(
+            "{} delete #{} pool",
+            env::predecessor_account_id(),
+            pool_id.0
+        )
     }
 
     pub(crate) fn internal_use_pool<F, R>(&mut self, pool_id: PoolId, mut f: F) -> R
@@ -290,7 +298,7 @@ impl PoolCreatorAction for TokenConvertor {
         is_reversible: bool,
         in_token_rate: u32,
         out_token_rate: u32,
-    ) -> u32 {
+    ) -> PoolId {
         self.assert_contract_is_not_paused();
         assert!(
             !in_token.eq(&out_token),

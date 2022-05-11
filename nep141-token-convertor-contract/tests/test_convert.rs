@@ -1,6 +1,6 @@
 use crate::common::constant::{convertor_contract_id, string_to_account};
 use crate::common::convertor::setup_pools;
-use near_sdk::json_types::U128;
+use near_sdk::json_types::{U128, U64};
 use near_sdk::serde_json::json;
 use nep141_token_convertor_contract::token_receiver::ConvertAction;
 use nep141_token_convertor_contract::token_receiver::TransferMessage::{AddLiquidity, Convert};
@@ -36,7 +36,7 @@ pub fn test_convert() {
             convertor_contract_id(),
             U128::from(10),
             Option::None,
-            json!(AddLiquidity { pool_id: 1 }).to_string(),
+            json!(AddLiquidity { pool_id: U64(1) }).to_string(),
         )
         .assert_success();
 
@@ -48,7 +48,7 @@ pub fn test_convert() {
 
     let convert_msg = json!(Convert {
         convert_action: ConvertAction {
-            pool_id: 1,
+            pool_id: U64(1),
             input_token_id: token_out.contract.account_id(),
             input_token_amount: U128::from(10)
         }
