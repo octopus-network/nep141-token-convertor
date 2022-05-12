@@ -18,8 +18,9 @@ pub const ACC_ID_AS_CLT_KEY_STORAGE: StorageUsage = ACC_ID_AS_KEY_STORAGE + 1;
 /// + VAccount enum: 1 byte
 /// + U128_STORAGE: near_amount_for_storage storage
 /// + U32_STORAGE: tokens HashMap length
+/// + U32_STORAGE: ft_transfer_lock storage
 pub const INIT_ACCOUNT_STORAGE: StorageUsage =
-    ACC_ID_AS_CLT_KEY_STORAGE + 1 + U32_STORAGE + U128_STORAGE;
+    ACC_ID_AS_CLT_KEY_STORAGE + 1 + U32_STORAGE + U32_STORAGE + U128_STORAGE;
 
 /// Defining PREPAY_STORAGE is the maximum StorageUsage that can be occupied after any contract interfaces executing
 /// now the maximum StorageUsage is delete_pool:
