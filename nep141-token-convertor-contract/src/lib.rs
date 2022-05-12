@@ -1,19 +1,19 @@
 extern crate core;
 
 pub mod account;
-pub mod admin;
 pub mod constants;
 pub mod contract_interfaces;
 pub mod contract_viewers;
 pub mod conversion_pool;
 pub mod external_trait;
+pub mod owner;
 pub mod storage_impl;
 pub mod token_receiver;
 pub mod types;
 
 use crate::account::VAccount;
 use crate::conversion_pool::VPool;
-pub use crate::types::{FtMetaData, TokenDirectionKey};
+pub use crate::types::FtMetaData;
 use itertools::Itertools;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::{LookupMap, UnorderedMap};
@@ -28,11 +28,11 @@ use types::PoolId;
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 pub struct TokenConvertor {
-    pub admin: AccountId,
+    pub owner: AccountId,
     pub accounts: LookupMap<AccountId, VAccount>,
     pub pools: UnorderedMap<PoolId, VPool>,
     pub whitelisted_tokens: UnorderedMap<AccountId, FtMetaData>,
-    // request deposit some near when creating pool.admin can change it.
+    // request deposit some near when creating pool.owner can change it.
     pub create_pool_deposit: Balance,
     // auto increase id.
     pub pool_id: u64,
@@ -49,9 +49,9 @@ pub(crate) enum StorageKey {
 #[near_bindgen]
 impl TokenConvertor {
     #[init]
-    pub fn new(admin: AccountId) -> Self {
+    pub fn new(owner: AccountId) -> Self {
         Self {
-            admin,
+            owner,
             accounts: LookupMap::new(StorageKey::Accounts),
             pools: UnorderedMap::new(StorageKey::Pools),
             whitelisted_tokens: UnorderedMap::new(StorageKey::WhitelistedTokens),
@@ -86,30 +86,12 @@ impl TokenConvertor {
         let account = self
             .internal_get_account(account_id)
             .expect(format!("user {} hasn't registered.", account_id).as_str());
+
+        let min_bound = self.internal_get_storage_balance_min_bound(&account_id);
         assert!(
-            account.near_amount_for_storage
-                >= self.internal_get_storage_balance_min_bound(account_id),
+            account.near_amount_for_storage >= min_bound,
             "Need deposit {} for storage.",
-            self.internal_get_storage_balance_min_bound(account_id)
-                - account.near_amount_for_storage
-        );
-    }
-
-    pub(crate) fn assert_remain_gas_greater_then(&self, gas: Gas) {
-        let remain_gas = env::prepaid_gas() - env::used_gas();
-        assert!(
-            remain_gas > gas,
-            "Need at least {} gas to go on, but only remain {} gas.",
-            gas.0,
-            remain_gas.0
-        );
-    }
-
-    pub(crate) fn assert_admin_access(&self) {
-        assert_eq!(
-            self.admin,
-            env::predecessor_account_id(),
-            "require admin access permission."
+            min_bound - account.near_amount_for_storage
         );
     }
 }
@@ -131,8 +113,8 @@ pub mod test {
         testing_env!(context.predecessor_account_id(accounts(0)).build());
         testing_env!(context.attached_deposit(1).build());
         testing_env!(context.block_timestamp(1638790720000).build());
-        let whitelist_admin = AccountId::try_from("whitelist_admin.near".to_string()).unwrap();
-        let contract = TokenConvertor::new(whitelist_admin.clone());
-        (context, contract, whitelist_admin.clone())
+        let owner = AccountId::try_from("owner.near".to_string()).unwrap();
+        let contract = TokenConvertor::new(owner.clone());
+        (context, contract, owner.clone())
     }
 }

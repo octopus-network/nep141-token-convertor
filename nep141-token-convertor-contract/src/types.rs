@@ -10,17 +10,6 @@ construct_uint! {
     pub struct U256(4);
 }
 
-#[derive(BorshSerialize, BorshDeserialize)]
-pub struct TokenDirectionKey(String);
-
-impl TokenDirectionKey {
-    pub fn new(from_token: &AccountId, to_token: &AccountId) -> Self {
-        Self {
-            0: format!("{}:{}", from_token.to_string(), to_token.to_string()),
-        }
-    }
-}
-
 #[derive(
     BorshDeserialize,
     BorshSerialize,

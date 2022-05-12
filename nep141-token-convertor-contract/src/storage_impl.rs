@@ -29,7 +29,7 @@ impl StorageManagement for TokenConvertor {
             "{} storage deposit {} yocto near, require at least deposit {} yocto near for storage now.",
             env::predecessor_account_id(),
             env::attached_deposit(),
-            self.internal_get_storage_balance_min_bound(&account_id)
+            min_balance
         );
         assert!(
             attach_amount + account.near_amount_for_storage >= min_balance,

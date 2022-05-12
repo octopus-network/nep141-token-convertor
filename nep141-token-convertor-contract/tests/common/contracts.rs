@@ -14,11 +14,11 @@ near_sdk_sim::lazy_static_include::lazy_static_include_bytes! {
 
 pub fn setup_convertor_contract() -> (UserAccount, UserAccount, Convertor) {
     let root = init_simulator(None);
-    let admin = root.create_user(string_to_account("admin"), to_yocto("100"));
+    let owner = root.create_user(string_to_account("owner"), to_yocto("100"));
     let convertor = Convertor {
-        contract: deploy_convertor_contract(&root, admin.account_id.clone()),
+        contract: deploy_convertor_contract(&root, owner.account_id.clone()),
     };
-    return (root, admin, convertor);
+    return (root, owner, convertor);
 }
 
 pub trait NearContract<T> {
@@ -55,14 +55,14 @@ pub fn print_execution_result(result: &ExecutionResult) {
 
 pub fn deploy_convertor_contract(
     signer_account: &UserAccount,
-    admin: AccountId,
+    owner: AccountId,
 ) -> ContractAccount<TokenConvertorContract> {
     let contract = deploy! {
         contract: TokenConvertorContract,
         contract_id: convertor_contract_id(),
         bytes: &CONVERTOR_WASM_BYTES,
         signer_account: signer_account,
-        init_method: new(admin_id())
+        init_method: new(owner_id())
     };
     contract
 }
@@ -95,5 +95,3 @@ pub fn deploy_test_token_contract(
     }
     t
 }
-
-// pub fn deploy_prize_pool_contract(signer_account: &UserAccount, admin: Option<AccountId>)->ContractAccount<>

@@ -33,12 +33,11 @@ impl ConvertorViewer for TokenConvertor {
             .internal_get_account(&account_id)
             .map(|e| e.near_amount_for_storage)
             .unwrap_or(0);
-        return if near_amount_for_storage
-            >= self.internal_get_storage_balance_min_bound(&account_id)
-        {
+        let min_bound = self.internal_get_storage_balance_min_bound(&account_id);
+        return if near_amount_for_storage >= min_bound {
             U128(0)
         } else {
-            U128(self.internal_get_storage_balance_min_bound(&account_id) - near_amount_for_storage)
+            U128(min_bound - near_amount_for_storage)
         };
     }
 
@@ -51,15 +50,4 @@ impl ConvertorViewer for TokenConvertor {
     fn is_contract_paused(&self) -> bool {
         self.contract_is_paused
     }
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-#[cfg(test)]
-mod test_viewer {
-    // use crate::contract_interfaces::{AdminAction, ConvertorViewer, PoolCreatorAction};
-    // use crate::test::setup_contract;
-    // use crate::FtMetaData;
-    // use near_contract_standards::fungible_token::receiver::FungibleTokenReceiver;
-    // use near_sdk::json_types::U128;
-    // use near_sdk::test_utils::{accounts, VMContextBuilder};
 }

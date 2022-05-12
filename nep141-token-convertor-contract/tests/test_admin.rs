@@ -10,7 +10,7 @@ mod common;
 
 #[test]
 fn test_whitelist() {
-    let (root, admin, convertor) = setup_convertor_contract();
+    let (root, owner, convertor) = setup_convertor_contract();
     let mut tokens = vec![
         FtMetaData {
             token_id: string_to_account("usdt"),
@@ -26,7 +26,7 @@ fn test_whitelist() {
         },
     ];
     convertor
-        .extend_whitelisted_tokens(&admin, tokens.clone())
+        .extend_whitelisted_tokens(&owner, tokens.clone())
         .assert_success();
     assert_eq!(
         convertor.get_whitelist(),
@@ -37,32 +37,32 @@ fn test_whitelist() {
     tokens.pop();
     tokens.pop();
     let remove_token_ids = vec![string_to_account("usdn"), string_to_account("usdc")];
-    convertor.remove_whitelisted_tokens(&admin, remove_token_ids.clone());
+    convertor.remove_whitelisted_tokens(&owner, remove_token_ids.clone());
     assert_eq!(convertor.get_whitelist(), tokens, "remove token not right");
     assert!(
         !convertor
             .extend_whitelisted_tokens(&root, tokens.clone())
             .is_ok(),
-        "should failed by admin access check"
+        "should failed by owner access check"
     );
     assert!(
         !convertor
             .remove_whitelisted_tokens(&root, remove_token_ids.clone())
             .is_ok(),
-        "should failed by admin access check"
+        "should failed by owner access check"
     )
 }
 
 #[test]
 fn test_set_pool_create_deposit_amount() {
-    let (root, admin, convertor) = setup_convertor_contract();
+    let (root, owner, convertor) = setup_convertor_contract();
     assert!(
         !convertor
             .set_pool_create_deposit_amount(&root, U128::from(1))
             .is_ok(),
-        "should failed by admin access check"
+        "should failed by owner access check"
     );
     convertor
-        .set_pool_create_deposit_amount(&admin, U128::from(1))
+        .set_pool_create_deposit_amount(&owner, U128::from(1))
         .assert_success();
 }

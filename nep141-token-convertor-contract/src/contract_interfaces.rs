@@ -30,7 +30,7 @@ pub trait PoolCreatorAction {
         out_token_rate: u32,
     ) -> PoolId;
 
-    /// only pool creator or admin can withdraw token in pool
+    /// only pool creator or owner can withdraw token in pool
     /// if amount is Option::None, it means withdraw all
     fn withdraw_token_in_pool(
         &mut self,
@@ -42,7 +42,7 @@ pub trait PoolCreatorAction {
     fn delete_pool(&mut self, pool_id: PoolId);
 }
 
-pub trait AdminAction {
+pub trait OwnerAction {
     fn extend_whitelisted_tokens(&mut self, tokens: Vec<FtMetaData>);
 
     fn remove_whitelisted_tokens(&mut self, tokens: Vec<AccountId>);

@@ -221,7 +221,7 @@ impl ConversionPool {
         );
     }
 }
-#[near_bindgen]
+
 impl TokenConvertor {
     pub(crate) fn internal_convert(
         &mut self,
@@ -275,13 +275,11 @@ impl TokenConvertor {
         r
     }
 
-    #[private]
     pub(crate) fn internal_get_pool(&self, pool_id: &PoolId) -> Option<ConversionPool> {
         // return self.pools.get(&pool_id)
         return self.pools.get(pool_id).map(|pool| pool.into_current());
     }
 
-    #[private]
     pub(crate) fn internal_save_pool(&mut self, pool_id: PoolId, pool: &VPool) {
         self.pools.insert(&pool_id, &pool);
         // self.pools.replace(pool_id, &pool);
@@ -338,12 +336,12 @@ impl PoolCreatorAction for TokenConvertor {
     ) {
         self.assert_contract_is_not_paused();
         assert_one_yocto();
-        let admin = self.admin.clone();
+        let owner = self.owner.clone();
         let (creator, withdraw_amount) = self.internal_use_pool(pool_id, |pool| {
             assert!(
                 pool.creator.eq(&env::predecessor_account_id())
-                    || admin.eq(&env::predecessor_account_id()),
-                "Only creator or admin can remove liquidity."
+                    || owner.eq(&env::predecessor_account_id()),
+                "Only creator or owner can remove liquidity."
             );
             assert!(
                 token_id == pool.in_token || token_id == pool.out_token,
@@ -374,8 +372,8 @@ impl PoolCreatorAction for TokenConvertor {
             .expect("delete a non-existent pool");
         assert!(
             env::predecessor_account_id() == pool.creator
-                || env::predecessor_account_id() == self.admin,
-            "Only admin or creator can delete pool."
+                || env::predecessor_account_id() == self.owner,
+            "Only owner or creator can delete pool."
         );
         self.internal_delete_pool(&pool_id);
         if pool.deposit_near_amount.0 > 0 {
