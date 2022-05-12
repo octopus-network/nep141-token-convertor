@@ -3,3 +3,6 @@ members = [
     "./nep141-token-convertor-contract",
     "./test-token"
 ]
+
+[profile.release]
+overflow-checks = true
