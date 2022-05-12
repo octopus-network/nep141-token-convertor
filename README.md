@@ -23,7 +23,7 @@ Contents:
 - `whitelist`: `Pool creator` can only create a conversion pool for tokens in a whitelist.
 - `reversible`: By default, the conversion pool is one-way mapping, which means users can only convert token A to B. But when creating a pool, the creator can also select whether users are allowed to convert tokens reversely, which means the users can exchange token A and token B in both directions.
 - `user`: People who use a conversion pool to convert tokens.
-- `admin`: People who can manage whitelist, change deposit near amount when creating a pool and delete pools.
+- `owner`: People who can manage whitelist, change deposit near amount when creating a pool and delete pools.
 - `from_token`: If a conversion pool can convert `token A` to `token B`, using `from_token` refer to `token A`.
 - `to_token`: If a conversion pool can convert `token A` to `token B`, using `to_token` refer to `token B`.
 
@@ -33,7 +33,7 @@ Contents:
 
 Based on the design of `nep141`, different tokens can use the same icon and name, so a whitelist is required for protecting users from fraud.
 
-In this contract, the actions that `admin` can perform are as the following:
+In this contract, the actions that `owner` can perform are as the following:
 
 - Add token into the whitelist.
 - Remove token from the whitelist.
@@ -44,7 +44,7 @@ Anyone can create a conversion pool for a pair of tokens in the whitelist. When 
 
 ### Delete a conversion pool
 
-The pool creator and admin can delete the pool. Before a pool is deleted, it requires tokens in the pool should be  withdrawn. The near tokens that are deposited when creating the pool will transfer to the creator after the pool is deleted.
+The pool creator and owner can delete the pool. Before a pool is deleted, it requires tokens in the pool should be  withdrawn. The near tokens that are deposited when creating the pool will transfer to the creator after the pool is deleted.
 
 ### Transfer token to contract
 
@@ -66,11 +66,11 @@ These functions will be implemented by nep141's interface: [ft_on_transfer](http
 
 ### Withdraw token from pool
 
-The pool creator and admin can withdraw tokens from the pool to the creator account.
+The pool creator and owner can withdraw tokens from the pool to the creator account.
 
 ### Pause and resume contract
 
-Admin can pause and resume contract for enhancing security. When the contract is pausing, most contract functions will be unavailable.
+Owner can pause and resume contract for enhancing security. When the contract is pausing, most contract functions will be unavailable.
 
 ### View functions
 

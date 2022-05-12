@@ -9,6 +9,6 @@ pub fn convertor_contract_id() -> AccountId {
     string_to_account("convertor")
 }
 
-pub fn admin_id() -> AccountId {
-    string_to_account("admin")
+pub fn owner_id() -> AccountId {
+    string_to_account("owner")
 }

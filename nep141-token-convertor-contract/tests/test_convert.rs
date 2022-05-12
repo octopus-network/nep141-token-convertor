@@ -10,7 +10,7 @@ pub mod common;
 #[allow(unused_variables)]
 #[test]
 pub fn test_convert() {
-    let (root, admin, convertor, creator, user, whitelist_tokens, token_contracts) = setup_pools();
+    let (root, owner, convertor, creator, user, whitelist_tokens, token_contracts) = setup_pools();
     convertor
         .create_pool(
             &creator,

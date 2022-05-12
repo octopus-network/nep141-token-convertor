@@ -82,10 +82,9 @@ impl TokenConvertor {
         amount: Balance,
     ) -> Promise {
         self.assert_storage_balance_bound_min(receiver_id);
-        let ft_transfer_gas = Gas::ONE_TERA.mul(T_GAS_FOR_FT_TRANSFER);
-        let ft_transfer_resolved_gas = Gas::ONE_TERA.mul(T_GAS_FOR_RESOLVE_TRANSFER);
+        // account ft_transfer_lock plus one, it'll minus one when ft_transfer_resolved,
+        // By this way, contract can avoid some methods executing between ft_transfer and ft_transfer_resolved
         self.internal_use_account(&receiver_id, |account| account.plus_ft_transfer_lock());
-        self.assert_remain_gas_greater_then(ft_transfer_gas + ft_transfer_resolved_gas);
         ext_fungible_token::ft_transfer(
             receiver_id.clone(),
             U128(amount),

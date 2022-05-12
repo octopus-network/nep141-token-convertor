@@ -12,7 +12,7 @@ pub mod common;
 #[allow(unused_variables)]
 #[test]
 fn test_create_pool() {
-    let (root, admin, convertor, creator, user, whitelist_tokens, token_contracts) = setup_pools();
+    let (root, owner, convertor, creator, user, whitelist_tokens, token_contracts) = setup_pools();
     convertor
         .create_pool(
             &creator,
@@ -24,7 +24,7 @@ fn test_create_pool() {
             Option::None,
         )
         .assert_success();
-    convertor.set_pool_create_deposit_amount(&admin, U128(to_yocto("1")));
+    convertor.set_pool_create_deposit_amount(&owner, U128(to_yocto("1")));
 
     assert!(
         !convertor
@@ -56,10 +56,10 @@ fn test_create_pool() {
 
 #[test]
 fn test_deposit_withdraw_delete() {
-    let (root, admin, convertor, creator, user, whitelist_tokens, token_contracts) = setup_pools();
+    let (root, owner, convertor, creator, user, whitelist_tokens, token_contracts) = setup_pools();
 
     convertor
-        .set_pool_create_deposit_amount(&admin, U128::from(1))
+        .set_pool_create_deposit_amount(&owner, U128::from(1))
         .assert_success();
     convertor
         .create_pool(

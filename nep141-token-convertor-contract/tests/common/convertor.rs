@@ -174,7 +174,7 @@ pub fn setup_pools() -> (
     Vec<FtMetaData>,
     Vec<Nep141>,
 ) {
-    let (root, admin, convertor) = setup_convertor_contract();
+    let (root, owner, convertor) = setup_convertor_contract();
     let creator = root.create_user(string_to_account("creator"), to_yocto("100"));
     let user = root.create_user(string_to_account("user"), to_yocto("100"));
 
@@ -195,7 +195,7 @@ pub fn setup_pools() -> (
             decimals: 6,
         },
     ];
-    convertor.extend_whitelisted_tokens(&admin, whitelist_tokens.clone());
+    convertor.extend_whitelisted_tokens(&owner, whitelist_tokens.clone());
     let token_contracts = whitelist_tokens
         .iter()
         .map(|e| Nep141 {
@@ -213,7 +213,7 @@ pub fn setup_pools() -> (
 
     return (
         root,
-        admin,
+        owner,
         convertor,
         creator,
         user,
