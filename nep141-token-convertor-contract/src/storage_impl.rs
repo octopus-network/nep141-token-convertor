@@ -8,7 +8,6 @@ use near_sdk::{assert_one_yocto, Promise};
 
 #[near_bindgen]
 impl StorageManagement for TokenConvertor {
-
     /// if account_id is Option::None, it will be deposited for env::predecessor_account_id().
     /// if registration_only is true, the near tokens that exceed internal_get_storage_balance_min_bound will be refunded.
     /// if registration_only is false, all of the attached near tokens will be deposited.
@@ -18,6 +17,7 @@ impl StorageManagement for TokenConvertor {
         account_id: Option<AccountId>,
         registration_only: Option<bool>,
     ) -> StorageBalance {
+        self.assert_contract_is_not_paused();
         let attach_amount = env::attached_deposit();
         let account_id = account_id.unwrap_or(env::predecessor_account_id());
         let mut account = self
@@ -26,7 +26,7 @@ impl StorageManagement for TokenConvertor {
         let registration_only = registration_only.unwrap_or(false);
         let min_balance = self.internal_get_storage_balance_min_bound(&account_id);
         log!(
-            "{} storage deposit {} yocto near, but at least deposit {} for storage.",
+            "{} storage deposit {} yocto near, require at least deposit {} yocto near for storage now.",
             env::predecessor_account_id(),
             env::attached_deposit(),
             self.internal_get_storage_balance_min_bound(&account_id)
@@ -54,6 +54,7 @@ impl StorageManagement for TokenConvertor {
 
     #[payable]
     fn storage_withdraw(&mut self, amount: Option<U128>) -> StorageBalance {
+        self.assert_contract_is_not_paused();
         assert_one_yocto();
         let transfer_amount: u128 =
             self.internal_use_account(&env::predecessor_account_id(), |account| {
@@ -80,8 +81,10 @@ impl StorageManagement for TokenConvertor {
     #[allow(unused_variables)]
     #[payable]
     fn storage_unregister(&mut self, force: Option<bool>) -> bool {
+        self.assert_contract_is_not_paused();
         assert_one_yocto();
         let account_id = env::predecessor_account_id();
+        self.internal_check_ft_transfer_is_lock(&account_id);
         if let Some(account) = self.internal_get_account(&account_id) {
             assert!(
                 account.tokens.is_empty(),
@@ -116,7 +119,6 @@ impl StorageManagement for TokenConvertor {
 }
 
 impl TokenConvertor {
-
     pub(crate) fn internal_get_storage_balance_min_bound(&self, account_id: &AccountId) -> u128 {
         let account = self.internal_get_account(account_id);
         let min_usage = if account.is_some() {

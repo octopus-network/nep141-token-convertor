@@ -32,6 +32,12 @@ pub struct Account {
     pub near_amount_for_storage: Balance,
     // only record token in whitelist,so HashMap is ok.
     pub tokens: HashMap<AccountId, Balance>,
+
+    /// use ft_transfer_lock to avoid some methods executing between ft_transfer and ft_transfer_resolved
+    /// ft_transfer_lock will plus one when ft_transfer.
+    /// ft_transfer_lock will minus one when ft_transfer_resolved.
+    /// a user can call storage_unregister only if ft_transfer_lock eq zero.
+    pub ft_transfer_lock: u32,
 }
 
 impl Account {
@@ -39,6 +45,7 @@ impl Account {
         Account {
             near_amount_for_storage: 0,
             tokens: HashMap::new(),
+            ft_transfer_lock: 0,
         }
     }
 
@@ -73,10 +80,25 @@ impl Account {
             0
         }
     }
+
+    pub fn plus_ft_transfer_lock(&mut self) {
+        self.ft_transfer_lock += 1
+    }
+
+    pub fn minus_ft_transfer_lock(&mut self) {
+        self.ft_transfer_lock -= 1
+    }
 }
 
-#[near_bindgen]
 impl TokenConvertor {
+    pub(crate) fn internal_check_ft_transfer_is_lock(&self, account_id: &AccountId) -> bool {
+        return self
+            .internal_get_account(account_id)
+            .expect(format!("not found account #{}", account_id).as_str())
+            .ft_transfer_lock
+            == 0;
+    }
+
     pub(crate) fn internal_get_account(&self, account_id: &AccountId) -> Option<Account> {
         return self
             .accounts
@@ -90,7 +112,7 @@ impl TokenConvertor {
     {
         let mut account = self
             .internal_get_account(account_id)
-            .expect(format!("No such account #{}.",account_id).as_str());
+            .expect(format!("No such account #{}.", account_id).as_str());
         let r = f(&mut account);
         self.internal_save_account(account_id, account);
         r

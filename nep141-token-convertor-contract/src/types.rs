@@ -1,8 +1,9 @@
 use crate::*;
+use near_sdk::json_types::U64;
 use near_sdk::AccountId;
 use uint::construct_uint;
 
-pub type PoolId = u32;
+pub type PoolId = U64;
 
 construct_uint! {
     /// 256-bit unsigned integer.

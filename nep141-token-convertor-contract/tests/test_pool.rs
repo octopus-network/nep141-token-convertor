@@ -2,7 +2,7 @@ use crate::common::*;
 use crate::constant::{convertor_contract_id, string_to_account};
 use crate::contracts::should_failed;
 use crate::convertor::setup_pools;
-use near_sdk::json_types::U128;
+use near_sdk::json_types::{U128, U64};
 use near_sdk::serde_json::json;
 use near_sdk_sim::to_yocto;
 use nep141_token_convertor_contract::token_receiver::TransferMessage::AddLiquidity;
@@ -84,7 +84,7 @@ fn test_deposit_withdraw_delete() {
             convertor_contract_id(),
             U128::from(10),
             Option::None,
-            json!(AddLiquidity { pool_id: 1 }).to_string(),
+            json!(AddLiquidity { pool_id: U64(1) }).to_string(),
         )
         .assert_success();
 
@@ -96,7 +96,7 @@ fn test_deposit_withdraw_delete() {
     convertor
         .withdraw_token(
             &creator,
-            1,
+            U64(1),
             whitelist_tokens[0].token_id.clone(),
             Option::None,
         )
@@ -109,7 +109,7 @@ fn test_deposit_withdraw_delete() {
     convertor
         .withdraw_token(
             &creator,
-            1,
+            U64(1),
             whitelist_tokens[1].token_id.clone(),
             Option::None,
         )
@@ -120,8 +120,8 @@ fn test_deposit_withdraw_delete() {
         convertor.get_pools(0, 1).pop().unwrap().out_token_balance.0
     );
 
-    should_failed(&convertor.delete_pool(&root, 1));
-    convertor.delete_pool(&creator, 1).assert_success();
+    should_failed(&convertor.delete_pool(&root, U64(1)));
+    convertor.delete_pool(&creator, U64(1)).assert_success();
     let balance = token0.ft_balance_of(string_to_account("creator"));
     assert_eq!(100, balance.0);
 }

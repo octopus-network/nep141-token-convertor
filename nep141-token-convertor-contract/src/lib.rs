@@ -35,7 +35,7 @@ pub struct TokenConvertor {
     // request deposit some near when creating pool.admin can change it.
     pub create_pool_deposit: Balance,
     // auto increase id.
-    pub pool_id: u32,
+    pub pool_id: u64,
     pub contract_is_paused: bool,
 }
 
@@ -88,9 +88,9 @@ impl TokenConvertor {
             .expect(format!("user {} hasn't registered.", account_id).as_str());
         assert!(
             account.near_amount_for_storage
-                >= self.internal_get_storage_balance_min_bound(&env::predecessor_account_id()),
+                >= self.internal_get_storage_balance_min_bound(account_id),
             "Need deposit {} for storage.",
-            self.internal_get_storage_balance_min_bound(&env::predecessor_account_id())
+            self.internal_get_storage_balance_min_bound(account_id)
                 - account.near_amount_for_storage
         );
     }
