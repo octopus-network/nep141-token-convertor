@@ -18,6 +18,8 @@ pub trait ConvertorViewer {
     fn get_account(&self, account_id: AccountId) -> AccountView;
 
     fn is_contract_paused(&self) -> bool;
+
+    fn get_deposit_amount_of_pool_creation(&self) -> U128;
 }
 
 pub trait PoolCreatorAction {
