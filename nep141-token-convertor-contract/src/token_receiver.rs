@@ -36,15 +36,15 @@ impl FungibleTokenReceiver for TokenConvertor {
         msg: String,
     ) -> PromiseOrValue<U128> {
         self.assert_contract_is_not_paused();
-        let transfer_message: TransferMessage = serde_json::from_str(msg.as_str())
-            .expect("Fail to deserialize msg when ft_on_transfer.");
+        let transfer_message: TransferMessage =
+            serde_json::from_str(msg.as_str()).expect("Invalid parameter 'msg' is attached.");
         let token_id = env::predecessor_account_id();
         match transfer_message {
             TransferMessage::AddLiquidity { pool_id } => {
                 self.internal_use_pool(pool_id, |pool| {
                     assert_eq!(
                         sender_id, pool.creator,
-                        "Only creator can deposit token into pool."
+                        "Only pool creator can deposit token into the pool."
                     );
                     pool.add_liquidity(&token_id, amount.0);
                 });
@@ -52,12 +52,12 @@ impl FungibleTokenReceiver for TokenConvertor {
             TransferMessage::Convert { convert_action } => {
                 assert_eq!(
                     token_id, convert_action.input_token_id,
-                    "Transferred token id: {} not eq convert_action token id: {} ",
+                    "Received token '{}' does not match the token '{}' specified in attached 'msg'.",
                     token_id, convert_action.input_token_id
                 );
                 assert_eq!(
                     amount, convert_action.input_token_amount,
-                    "Transferred token amount: {} not eq convert_action token amount: {} ",
+                    "Received amount '{}' does not match the amount '{}' specified in attached 'msg'.",
                     amount.0, convert_action.input_token_amount.0
                 );
                 let (receive_token_id, receive_token_amount) =
@@ -113,7 +113,7 @@ impl TokenConvertor {
         assert_eq!(
             env::promise_results_count(),
             1,
-            "Expect 1 promise result from withdraw."
+            "Expect 1 promise result for sending token."
         );
         match env::promise_result(0) {
             PromiseResult::NotReady => unreachable!(),
@@ -123,8 +123,11 @@ impl TokenConvertor {
             PromiseResult::Failed => {
                 // This reverts the changes from withdraw function.
                 // If account doesn't exit, deposits to the owner's account as lostfound.
-
-                log!("Transfer token failed. Try to deposit token into account.");
+                log!(
+                    "Failed to transfer token '{}' for '{}'. Try to register the account in the token contract first.",
+                    token_id,
+                    sender_id
+                );
                 let mut account = self
                     .internal_get_account(&sender_id)
                     .unwrap_or(Account::new());

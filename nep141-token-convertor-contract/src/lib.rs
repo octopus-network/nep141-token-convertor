@@ -64,7 +64,7 @@ impl TokenConvertor {
     pub(crate) fn assert_token_in_whitelist(&self, token: &AccountId) {
         assert!(
             self.whitelisted_tokens.get(token).is_some(),
-            "token {} is not in whitelist",
+            "Token '{}' is not in the whitelist.",
             token
         );
     }
@@ -73,7 +73,7 @@ impl TokenConvertor {
         assert_eq!(
             env::attached_deposit(),
             self.create_pool_deposit,
-            "Create pool must deposit {} yocto near.",
+            "Creating a pool requires a deposit of '{}' yocto NEAR.",
             self.create_pool_deposit
         );
     }
@@ -85,12 +85,12 @@ impl TokenConvertor {
     pub(crate) fn assert_storage_balance_bound_min(&self, account_id: &AccountId) {
         let account = self
             .internal_get_account(account_id)
-            .expect(format!("user {} hasn't registered.", account_id).as_str());
+            .expect(format!("The account '{}' is not registered.", account_id).as_str());
 
         let min_bound = self.internal_get_storage_balance_min_bound(&account_id);
         assert!(
             account.near_amount_for_storage >= min_bound,
-            "Need deposit {} for storage.",
+            "Need to deposit at least '{}' yocto NEAR as storage fee.",
             min_bound - account.near_amount_for_storage
         );
     }
