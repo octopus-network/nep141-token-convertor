@@ -96,7 +96,7 @@ impl TokenConvertor {
             .internal_get_account(account_id)
             .expect(format!("not found account #{}", account_id).as_str())
             .ft_transfer_lock
-            == 0;
+            > 0;
     }
 
     pub(crate) fn internal_get_account(&self, account_id: &AccountId) -> Option<Account> {
