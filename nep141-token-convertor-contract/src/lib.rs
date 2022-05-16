@@ -49,13 +49,13 @@ pub(crate) enum StorageKey {
 #[near_bindgen]
 impl TokenConvertor {
     #[init]
-    pub fn new(owner: AccountId) -> Self {
+    pub fn new(owner: AccountId, create_pool_deposit: U128) -> Self {
         Self {
             owner,
             accounts: LookupMap::new(StorageKey::Accounts),
             pools: UnorderedMap::new(StorageKey::Pools),
             whitelisted_tokens: UnorderedMap::new(StorageKey::WhitelistedTokens),
-            create_pool_deposit: 0,
+            create_pool_deposit: create_pool_deposit.0,
             pool_id: 0,
             contract_is_paused: false,
         }
@@ -100,6 +100,7 @@ impl TokenConvertor {
 #[cfg(test)]
 pub mod test {
     use crate::TokenConvertor;
+    use near_sdk::json_types::U128;
     use near_sdk::test_utils::{accounts, VMContextBuilder};
     use near_sdk::{testing_env, AccountId};
     use std::convert::TryFrom;
@@ -114,7 +115,7 @@ pub mod test {
         testing_env!(context.attached_deposit(1).build());
         testing_env!(context.block_timestamp(1638790720000).build());
         let owner = AccountId::try_from("owner.near".to_string()).unwrap();
-        let contract = TokenConvertor::new(owner.clone());
+        let contract = TokenConvertor::new(owner.clone(), U128(0));
         (context, contract, owner.clone())
     }
 }

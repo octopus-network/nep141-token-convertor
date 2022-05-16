@@ -1,5 +1,6 @@
 use crate::common::constant::*;
 use crate::common::convertor::Convertor;
+use near_sdk::json_types::U128;
 use near_sdk::AccountId;
 use near_sdk_sim::{
     call, deploy, init_simulator, to_yocto, ContractAccount, ExecutionResult, UserAccount,
@@ -16,7 +17,7 @@ pub fn setup_convertor_contract() -> (UserAccount, UserAccount, Convertor) {
     let root = init_simulator(None);
     let owner = root.create_user(string_to_account("owner"), to_yocto("100"));
     let convertor = Convertor {
-        contract: deploy_convertor_contract(&root, owner.account_id.clone()),
+        contract: deploy_convertor_contract(&root, owner.account_id.clone(), U128(to_yocto("0"))),
     };
     return (root, owner, convertor);
 }
@@ -56,13 +57,14 @@ pub fn print_execution_result(result: &ExecutionResult) {
 pub fn deploy_convertor_contract(
     signer_account: &UserAccount,
     owner: AccountId,
+    deposit_near_amount: U128,
 ) -> ContractAccount<TokenConvertorContract> {
     let contract = deploy! {
         contract: TokenConvertorContract,
         contract_id: convertor_contract_id(),
         bytes: &CONVERTOR_WASM_BYTES,
         signer_account: signer_account,
-        init_method: new(owner_id())
+        init_method: new(owner_id(),deposit_near_amount)
     };
     contract
 }

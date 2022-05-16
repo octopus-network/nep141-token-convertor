@@ -84,7 +84,10 @@ impl StorageManagement for TokenConvertor {
         self.assert_contract_is_not_paused();
         assert_one_yocto();
         let account_id = env::predecessor_account_id();
-        self.internal_check_ft_transfer_is_lock(&account_id);
+        assert!(
+            !self.internal_check_ft_transfer_is_lock(&account_id),
+            "Fail to storage_unregister because still having ft_transfer not resolved."
+        );
         if let Some(account) = self.internal_get_account(&account_id) {
             assert!(
                 account.tokens.is_empty(),

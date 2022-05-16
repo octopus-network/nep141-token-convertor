@@ -50,4 +50,8 @@ impl ConvertorViewer for TokenConvertor {
     fn is_contract_paused(&self) -> bool {
         self.contract_is_paused
     }
+
+    fn get_deposit_amount_of_pool_creation(&self) -> U128 {
+        U128(self.create_pool_deposit)
+    }
 }
