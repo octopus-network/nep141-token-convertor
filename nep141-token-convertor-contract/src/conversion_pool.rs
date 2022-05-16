@@ -57,7 +57,7 @@ impl ConversionPool {
     ) -> Self {
         assert!(
             in_token_rate > 0 && out_token_rate > 0,
-            "Rate can't equal 0."
+            "Both scale factors should be greater than 0."
         );
         Self {
             id,
@@ -86,7 +86,7 @@ impl ConversionPool {
             let output_token_amount = self.calculate_output_token_amount(input_token_amount);
             assert!(
                 self.out_token_balance.0 >= output_token_amount,
-                "Fail to convert,pool to_token balance {} less than output token amount: {}",
+                "Failed to convert. The balance of 'to_token' in the pool ({}) is less than expected amount: {}",
                 self.out_token_balance.0,
                 output_token_amount
             );
@@ -98,7 +98,7 @@ impl ConversionPool {
                 self.calculate_reverse_output_token_amount(input_token_amount);
             assert!(
                 self.in_token_balance.0 >= output_token_amount,
-                "Fail to convert,pool from_token balance {} less than output token amount: {}",
+                "Failed to convert. The balance of 'from_token' in the pool ({}) is less than expected amount: {}",
                 self.in_token_balance.0,
                 output_token_amount
             );
@@ -136,7 +136,7 @@ impl ConversionPool {
             .in_token_balance
             .0
             .checked_add(deposit_balance)
-            .expect("Fail to deposit_from_token,token balance overflow");
+            .expect("Failed to deposit. Token balance overflowed.");
         self.in_token_balance = U128(new_balance);
     }
 
@@ -145,7 +145,7 @@ impl ConversionPool {
             .out_token_balance
             .0
             .checked_add(deposit_balance)
-            .expect("Fail to deposit_to_token,token balance overflow");
+            .expect("Failed to deposit. Token balance overflowed.");
         self.out_token_balance = U128(new_balance);
     }
 
@@ -160,7 +160,7 @@ impl ConversionPool {
             Some(amount) => {
                 assert!(
                     self.in_token_balance.0 >= amount,
-                    "Fail to withdraw_from_token, pool balance not enough!"
+                    "Failed to withdraw. Available balance in the pool is not enough."
                 );
                 self.in_token_balance = U128(self.in_token_balance.0 - amount);
                 amount
@@ -179,7 +179,7 @@ impl ConversionPool {
             Some(amount) => {
                 assert!(
                     self.out_token_balance.0 >= amount,
-                    "Fail to withdraw_from_token, pool balance not enough!"
+                    "Failed to withdraw. Available balance in the pool is not enough."
                 );
                 self.out_token_balance = U128(self.out_token_balance.0 - amount);
                 amount
@@ -191,7 +191,7 @@ impl ConversionPool {
         // token must be out_token or in_token
         assert!(
             token_id.eq(&self.out_token) || token_id.eq(&self.in_token),
-            "illegal input token: {},only accept {} or {}.",
+            "Invalid input token: '{}'. Only accept '{}' or '{}'.",
             token_id,
             self.in_token,
             self.out_token
@@ -199,8 +199,9 @@ impl ConversionPool {
         // token can only be out_token unless pool's reversible is true
         assert!(
             token_id.eq(&self.out_token) || self.reversible,
-            "illegal input token {},only accept from token when pool is reversible",
-            token_id
+            "Invalid input token '{}'. Only accept '{}' if the pool is not reversible.",
+            token_id,
+            self.out_token
         );
     }
 
@@ -208,7 +209,7 @@ impl ConversionPool {
         // token must be out_token or in_token
         assert!(
             token_id.eq(&self.out_token) || token_id.eq(&self.in_token),
-            "illegal input token: {},only accept {} or {}.",
+            "Invalid input token: '{}'. Only accept '{}' or '{}'.",
             token_id,
             self.in_token,
             self.out_token
@@ -216,8 +217,9 @@ impl ConversionPool {
         // token can only be in_token unless pool's reversible is true
         assert!(
             token_id.eq(&self.in_token) || self.reversible,
-            "illegal input token {},only accept from token when pool is reversible",
-            token_id
+            "Invalid input token '{}'. Only accept '{}' if the pool is not reversible.",
+            token_id,
+            self.in_token
         );
     }
 }
@@ -240,28 +242,24 @@ impl TokenConvertor {
     }
 
     pub(crate) fn internal_delete_pool(&mut self, pool_id: &PoolId) {
-        let pool = self.internal_get_pool(&pool_id).expect(
-            format!(
-                "Fail to delete #{} pool because the pool is non-existent",
-                pool_id.0
-            )
-            .as_str(),
-        );
+        let pool = self
+            .internal_get_pool(&pool_id)
+            .expect(format!("Pool '{}' is not existed.", pool_id.0).as_str());
         assert_eq!(
             pool.in_token_balance.0, 0,
-            "Fail to delete #{} pool,need to withdraw in token first.",
+            "Failed to delete pool '{}'. All of the 'in token' in the pool must be withdrawn first.",
             pool_id.0
         );
         assert_eq!(
             pool.out_token_balance.0, 0,
-            "Fail to delete #{} pool,need to withdraw out token first.",
+            "Failed to delete pool '{}'. All of the 'out token' in the pool must be withdrawn first.",
             pool_id.0
         );
         self.pools.remove(pool_id);
         log!(
-            "{} delete #{} pool",
-            env::predecessor_account_id(),
-            pool_id.0
+            "Pool '{}' is deleted by '{}'.",
+            pool_id.0,
+            env::predecessor_account_id()
         )
     }
 
@@ -269,7 +267,7 @@ impl TokenConvertor {
     where
         F: FnMut(&mut ConversionPool) -> R,
     {
-        let mut pool = self.internal_get_pool(&pool_id).expect("No such pool");
+        let mut pool = self.internal_get_pool(&pool_id).expect("No such pool.");
         let r = f(&mut pool);
         self.internal_save_pool(pool_id, &pool.into());
         r
@@ -300,7 +298,7 @@ impl PoolCreatorAction for TokenConvertor {
         self.assert_contract_is_not_paused();
         assert!(
             !in_token.eq(&out_token),
-            "You can't create pool for same token"
+            "Can not create pool for two same tokens."
         );
         self.assert_create_pool_deposit_amount();
         self.assert_token_in_whitelist(&in_token);
@@ -308,7 +306,7 @@ impl PoolCreatorAction for TokenConvertor {
         assert_eq!(
             self.whitelisted_tokens.get(&in_token).unwrap().decimals,
             self.whitelisted_tokens.get(&out_token).unwrap().decimals,
-            "tokens in a pool should have same decimals."
+            "Tokens in a pool should have the same decimals."
         );
         let id = self.internal_assign_pool_id();
         self.pools.insert(
@@ -341,11 +339,11 @@ impl PoolCreatorAction for TokenConvertor {
             assert!(
                 pool.creator.eq(&env::predecessor_account_id())
                     || owner.eq(&env::predecessor_account_id()),
-                "Only creator or owner can remove liquidity."
+                "Only contract owner or pool creator can remove liquidity from the pool."
             );
             assert!(
                 token_id == pool.in_token || token_id == pool.out_token,
-                "Illegal token id {}, only can withdraw {} or {}",
+                "Invalid token '{}'. Only '{}' or '{}' can be withdrawn.",
                 token_id,
                 pool.in_token,
                 pool.out_token
@@ -367,13 +365,11 @@ impl PoolCreatorAction for TokenConvertor {
     fn delete_pool(&mut self, pool_id: PoolId) {
         self.assert_contract_is_not_paused();
         assert_one_yocto();
-        let pool = self
-            .internal_get_pool(&pool_id)
-            .expect("delete a non-existent pool");
+        let pool = self.internal_get_pool(&pool_id).expect("No such pool.");
         assert!(
             env::predecessor_account_id() == pool.creator
                 || env::predecessor_account_id() == self.owner,
-            "Only owner or creator can delete pool."
+            "Only contract owner or pool creator can delete the pool."
         );
         self.internal_delete_pool(&pool_id);
         if pool.deposit_near_amount.0 > 0 {

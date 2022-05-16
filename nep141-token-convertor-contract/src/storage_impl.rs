@@ -26,14 +26,14 @@ impl StorageManagement for TokenConvertor {
         let registration_only = registration_only.unwrap_or(false);
         let min_balance = self.internal_get_storage_balance_min_bound(&account_id);
         log!(
-            "{} storage deposit {} yocto near, require at least deposit {} yocto near for storage now.",
-            env::predecessor_account_id(),
+            "Deposit '{}' yocto NEAR for account '{}' is attached, but the minimum storage deposit is '{}' yocto NEAR.",
             env::attached_deposit(),
+            env::predecessor_account_id(),
             min_balance
         );
         assert!(
             attach_amount + account.near_amount_for_storage >= min_balance,
-            "At least deposit {} yocto near.",
+            "Need to deposit at least '{}' yocto NEAR.",
             min_balance - account.near_amount_for_storage
         );
 
@@ -63,9 +63,9 @@ impl StorageManagement for TokenConvertor {
                     .unwrap_or(account.available_storage_deposit());
                 assert!(
                     withdraw_amount <= account.available_storage_deposit(),
-                    "withdraw amount {}, but only available {}",
-                    withdraw_amount,
-                    account.available_storage_deposit()
+                    "Account deposit '{}' is not enough for withdrawal amount '{}'.",
+                    account.available_storage_deposit(),
+                    withdraw_amount
                 );
                 account.near_amount_for_storage -= withdraw_amount;
                 withdraw_amount
@@ -86,12 +86,12 @@ impl StorageManagement for TokenConvertor {
         let account_id = env::predecessor_account_id();
         assert!(
             !self.internal_check_ft_transfer_is_lock(&account_id),
-            "Fail to storage_unregister because still having ft_transfer not resolved."
+            "Can not unregister while 'ft_transfer' is still in processing."
         );
         if let Some(account) = self.internal_get_account(&account_id) {
             assert!(
                 account.tokens.is_empty(),
-                "Fail to storage_unregister because still having token in account."
+                "Can not unregister if the account is still holding token(s)."
             );
             self.accounts.remove(&account_id);
             if account.near_amount_for_storage > 0 {
