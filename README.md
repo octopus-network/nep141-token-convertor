@@ -13,6 +13,7 @@ Contents:
   - [Withdraw token from pool](#Withdraw-token-from-pool)
   - [Pause and resume contract](#Pause-and-resume-contract)
   - [View functions](#View-functions)
+- [Auditing](#Auditing)
 
 ## Terminology
 
@@ -75,3 +76,9 @@ Owner can pause and resume contract for enhancing security. When the contract is
 ### View functions
 
 This contract has a set of view functions for anyone to get the status detail of this contract.
+
+## Auditing
+
+This contract has completed auditing by:
+
+* [BlockSec](https://blocksec.com) - The report is [here](/auditing/main_signed.pdf).
