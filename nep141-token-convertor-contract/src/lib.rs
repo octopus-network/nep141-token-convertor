@@ -5,6 +5,7 @@ pub mod constants;
 pub mod contract_interfaces;
 pub mod contract_viewers;
 pub mod conversion_pool;
+pub mod events;
 pub mod external_trait;
 pub mod owner;
 pub mod storage_impl;
@@ -107,6 +108,14 @@ pub mod test {
 
     pub fn string_to_account(name: &str) -> AccountId {
         AccountId::try_from(name.to_string()).unwrap()
+    }
+
+    pub fn usdt() -> AccountId {
+        AccountId::new_unchecked("usdt".to_string())
+    }
+
+    pub fn usdc() -> AccountId {
+        AccountId::new_unchecked("usdc".to_string())
     }
 
     pub fn setup_contract() -> (VMContextBuilder, TokenConvertor, AccountId) {

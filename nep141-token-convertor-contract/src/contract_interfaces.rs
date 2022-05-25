@@ -57,5 +57,5 @@ pub trait OwnerAction {
 }
 
 pub trait AccountAction {
-    fn withdraw_token_in_account(&mut self, account_id: AccountId);
+    fn withdraw_token_in_account(&mut self, token_id: AccountId);
 }
