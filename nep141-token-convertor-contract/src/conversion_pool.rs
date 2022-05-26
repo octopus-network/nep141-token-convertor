@@ -1,4 +1,5 @@
 use crate::contract_interfaces::PoolCreatorAction;
+use crate::events::{EventEmit, PoolEvent};
 use crate::types::U256;
 use crate::*;
 use near_sdk::assert_one_yocto;
@@ -322,6 +323,10 @@ impl PoolCreatorAction for TokenConvertor {
                 U128(env::attached_deposit()),
             )),
         );
+        PoolEvent::CreatePool {
+            pool: self.internal_get_pool(&id).as_ref().unwrap(),
+        }
+        .emit();
         id
     }
 
@@ -357,6 +362,10 @@ impl PoolCreatorAction for TokenConvertor {
                 },
             );
         });
+        PoolEvent::UpdatePool {
+            pool: self.internal_get_pool(&pool_id).as_ref().unwrap(),
+        }
+        .emit();
         // pool should finish withdraw here
         self.internal_send_tokens(&creator, &token_id, withdraw_amount);
     }
@@ -372,6 +381,7 @@ impl PoolCreatorAction for TokenConvertor {
             "Only contract owner or pool creator can delete the pool."
         );
         self.internal_delete_pool(&pool_id);
+        PoolEvent::DeletePool { pool_id: &pool_id }.emit();
         if pool.deposit_near_amount.0 > 0 {
             self.internal_send_near(pool.creator.clone(), pool.deposit_near_amount.0);
         }

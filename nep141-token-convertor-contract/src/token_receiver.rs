@@ -1,5 +1,6 @@
 use crate::account::Account;
 use crate::constants::{T_GAS_FOR_FT_TRANSFER, T_GAS_FOR_RESOLVE_TRANSFER};
+use crate::events::{EventEmit, PoolEvent};
 use crate::external_trait::ext_self;
 use crate::*;
 use near_contract_standards::fungible_token::core_impl::ext_fungible_token;
@@ -48,6 +49,10 @@ impl FungibleTokenReceiver for TokenConvertor {
                     );
                     pool.add_liquidity(&token_id, amount.0);
                 });
+                PoolEvent::UpdatePool {
+                    pool: self.internal_get_pool(&pool_id).as_ref().unwrap(),
+                }
+                .emit();
             }
             TransferMessage::Convert { convert_action } => {
                 assert_eq!(
@@ -62,6 +67,8 @@ impl FungibleTokenReceiver for TokenConvertor {
                 );
                 let (receive_token_id, receive_token_amount) =
                     self.internal_convert(convert_action.pool_id, &token_id, amount.0);
+                let pool = self.internal_get_pool(&convert_action.pool_id).unwrap();
+                PoolEvent::UpdatePool { pool: &pool }.emit();
                 self.internal_send_tokens(&sender_id, &receive_token_id, receive_token_amount);
             }
         }
