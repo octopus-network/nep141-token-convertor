@@ -6,7 +6,6 @@ pub mod contract_interfaces;
 pub mod contract_viewers;
 pub mod conversion_pool;
 pub mod events;
-pub mod external_trait;
 pub mod owner;
 pub mod storage_impl;
 pub mod token_receiver;
@@ -21,8 +20,8 @@ use near_sdk::collections::{LookupMap, UnorderedMap};
 use near_sdk::json_types::U128;
 use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::{
-    env, ext_contract, log, near_bindgen, serde_json, AccountId, Balance, BorshStorageKey, Gas,
-    PanicOnDefault, Promise, PromiseOrValue, PromiseResult,
+    env, log, near_bindgen, serde_json, AccountId, Balance, BorshStorageKey, Gas, PanicOnDefault,
+    Promise, PromiseOrValue, PromiseResult,
 };
 use types::PoolId;
 
