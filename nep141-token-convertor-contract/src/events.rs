@@ -97,15 +97,15 @@ mod tests {
 
         assert_eq!(
             test_utils::get_logs()[0],
-            r#"EVENT_JSON:{"pool_event":"create_pool","data":{"pool":{"id":"1","creator":"bob.near","in_token":"usdc","in_token_balance":"1","out_token":"usdt","out_token_balance":"1","reversible":false,"in_token_rate":0,"out_token_rate":0,"deposit_near_amount":"1"}},"standard":"convertor","version":"1.0.0"}"#
+            r#"EVENT_JSON:{"data":{"pool":{"creator":"bob.near","deposit_near_amount":"1","id":"1","in_token":"usdc","in_token_balance":"1","in_token_rate":0,"out_token":"usdt","out_token_balance":"1","out_token_rate":0,"reversible":false}},"pool_event":"create_pool","standard":"convertor","version":"1.0.0"}"#
         );
         assert_eq!(
             test_utils::get_logs()[1],
-            r#"EVENT_JSON:{"pool_event":"update_pool","data":{"pool":{"id":"1","creator":"bob.near","in_token":"usdc","in_token_balance":"1","out_token":"usdt","out_token_balance":"1","reversible":false,"in_token_rate":0,"out_token_rate":0,"deposit_near_amount":"1"}},"standard":"convertor","version":"1.0.0"}"#
+            r#"EVENT_JSON:{"data":{"pool":{"creator":"bob.near","deposit_near_amount":"1","id":"1","in_token":"usdc","in_token_balance":"1","in_token_rate":0,"out_token":"usdt","out_token_balance":"1","out_token_rate":0,"reversible":false}},"pool_event":"update_pool","standard":"convertor","version":"1.0.0"}"#
         );
         assert_eq!(
             test_utils::get_logs()[2],
-            r#"EVENT_JSON:{"pool_event":"delete_pool","data":{"pool_id":"1"},"standard":"convertor","version":"1.0.0"}"#
+            r#"EVENT_JSON:{"data":{"pool_id":"1"},"pool_event":"delete_pool","standard":"convertor","version":"1.0.0"}"#
         );
     }
 }

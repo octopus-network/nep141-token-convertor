@@ -105,10 +105,6 @@ pub mod test {
     use near_sdk::{testing_env, AccountId};
     use std::convert::TryFrom;
 
-    pub fn string_to_account(name: &str) -> AccountId {
-        AccountId::try_from(name.to_string()).unwrap()
-    }
-
     pub fn usdt() -> AccountId {
         AccountId::new_unchecked("usdt".to_string())
     }

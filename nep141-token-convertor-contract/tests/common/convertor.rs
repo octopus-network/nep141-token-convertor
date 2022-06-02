@@ -1,223 +1,165 @@
-// use crate::common::constant::{convertor_contract_id, string_to_account};
-// use crate::common::contracts::{
-//     deploy_test_token_contract, print_execution_result, setup_convertor_contract, NearContract,
-// };
-// use crate::common::nep141::Nep141;
-// use itertools::Itertools;
-// use near_sdk::json_types::U128;
-// use near_sdk::{AccountId, Balance};
-// use near_sdk_sim::{call, to_yocto, view, ContractAccount, ExecutionResult, UserAccount};
-// use nep141_token_convertor_contract::account::AccountView;
-// use nep141_token_convertor_contract::constants::T_GAS_FOR_RESOLVE_TRANSFER;
-// use nep141_token_convertor_contract::conversion_pool::ConversionPool;
-// use nep141_token_convertor_contract::types::PoolId;
-// use nep141_token_convertor_contract::FtMetaData;
-// use nep141_token_convertor_contract::TokenConvertorContract;
-// use test_token::ContractContract as TestTokenContract;
-//
-// pub struct Convertor {
-//     pub contract: ContractAccount<TokenConvertorContract>,
-// }
-//
-// impl NearContract<TokenConvertorContract> for Convertor {
-//     fn get_contract(&self) -> &ContractAccount<TokenConvertorContract> {
-//         &self.contract
-//     }
-// }
-//
-// impl Convertor {
-//     pub fn get_account(&self, account_id: AccountId) -> AccountView {
-//         let contract = &self.contract;
-//         view!(contract.get_account(account_id)).unwrap_json::<AccountView>()
-//     }
-//
-//     pub fn get_storage_fee_gap_of(&self, account_id: AccountId) -> U128 {
-//         let contract = &self.contract;
-//         view!(contract.get_storage_fee_gap_of(account_id)).unwrap_json::<U128>()
-//     }
-//
-//     pub fn get_pools(&self, from_index: u32, limit: u32) -> Vec<ConversionPool> {
-//         let contract = &self.contract;
-//         view!(contract.get_pools(from_index, limit)).unwrap_json::<Vec<ConversionPool>>()
-//     }
-//
-//     pub fn get_whitelist(&self) -> Vec<FtMetaData> {
-//         let contract = &self.contract;
-//         view!(contract.get_whitelist()).unwrap_json::<Vec<FtMetaData>>()
-//     }
-//     // fn get_pools(&self, from_index: u32, limit: u32) -> Vec<ConversionPool> {
-//     //     view()
-//     //
-//     // }
-//
-//     pub fn extend_whitelisted_tokens(
-//         &self,
-//         signer: &UserAccount,
-//         tokens: Vec<FtMetaData>,
-//     ) -> ExecutionResult {
-//         let contract = &self.contract;
-//
-//         let result = call!(signer, contract.extend_whitelisted_tokens(tokens));
-//         print_execution_result(&result);
-//         result
-//     }
-//
-//     pub fn remove_whitelisted_tokens(
-//         &self,
-//         signer: &UserAccount,
-//         tokens: Vec<AccountId>,
-//     ) -> ExecutionResult {
-//         let contract = &self.contract;
-//
-//         let result = call!(signer, contract.remove_whitelisted_tokens(tokens));
-//         print_execution_result(&result);
-//         result
-//     }
-//
-//     pub fn set_pool_create_deposit_amount(
-//         &self,
-//         signer: &UserAccount,
-//         amount: U128,
-//     ) -> ExecutionResult {
-//         let contract = &self.contract;
-//
-//         let result = call!(signer, contract.set_deposit_amount_of_pool_creation(amount));
-//         print_execution_result(&result);
-//         result
-//     }
-//
-//     pub fn create_pool(
-//         &self,
-//         signer: &UserAccount,
-//         token_from: AccountId,
-//         token_to: AccountId,
-//         is_reversible: bool,
-//         in_token_rate: u32,
-//         out_token_rate: u32,
-//         attach: Option<Balance>,
-//     ) -> ExecutionResult {
-//         let contract = &self.contract;
-//         let result = if attach.is_some() {
-//             call!(
-//                 signer,
-//                 contract.create_pool(
-//                     token_from,
-//                     token_to,
-//                     is_reversible,
-//                     in_token_rate,
-//                     out_token_rate
-//                 ),
-//                 deposit = attach.unwrap()
-//             )
-//         } else {
-//             call!(
-//                 signer,
-//                 contract.create_pool(
-//                     token_from,
-//                     token_to,
-//                     is_reversible,
-//                     in_token_rate,
-//                     out_token_rate
-//                 )
-//             )
-//         };
-//         // let result = call!(
-//         //     signer,
-//         //     contract.create_pool(token_from,token_to,is_reversible,in_token_rate,out_token_rate));
-//         print_execution_result(&result);
-//         result
-//     }
-//
-//     pub fn register_account(&self, signer: &UserAccount) -> ExecutionResult {
-//         let storage_fee = self.get_storage_fee_gap_of(signer.account_id.clone()).0;
-//         let contract = &self.contract;
-//         let result = call!(
-//             signer,
-//             contract.storage_deposit(Option::None, Option::None),
-//             deposit = storage_fee
-//         );
-//         print_execution_result(&result);
-//         result
-//     }
-//
-//     pub fn withdraw_token(
-//         &self,
-//         signer: &UserAccount,
-//         pool_id: PoolId,
-//         token_id: AccountId,
-//         amount: Option<U128>,
-//     ) -> ExecutionResult {
-//         let contract = &self.contract;
-//         let result = call!(
-//             signer,
-//             contract.withdraw_token_in_pool(pool_id, token_id, amount),
-//             deposit = 1
-//         );
-//         print_execution_result(&result);
-//         result
-//     }
-//
-//     pub fn delete_pool(&self, signer: &UserAccount, pool_id: PoolId) -> ExecutionResult {
-//         let contract = &self.contract;
-//         let result = call!(signer, contract.delete_pool(pool_id), deposit = 1);
-//         print_execution_result(&result);
-//         result
-//     }
-// }
-//
-// pub fn setup_pools() -> (
-//     UserAccount,
-//     UserAccount,
-//     Convertor,
-//     UserAccount,
-//     UserAccount,
-//     Vec<FtMetaData>,
-//     Vec<Nep141>,
-// ) {
-//     let (root, owner, convertor) = setup_convertor_contract();
-//     let creator = root.create_user(string_to_account("creator"), to_yocto("100"));
-//     let user = root.create_user(string_to_account("user"), to_yocto("100"));
-//
-//     convertor.register_account(&user).assert_success();
-//     convertor.register_account(&creator).assert_success();
-//
-//     let whitelist_tokens = vec![
-//         FtMetaData {
-//             token_id: string_to_account("usdt"),
-//             decimals: 6,
-//         },
-//         FtMetaData {
-//             token_id: string_to_account("usdc"),
-//             decimals: 6,
-//         },
-//         FtMetaData {
-//             token_id: string_to_account("usdn"),
-//             decimals: 6,
-//         },
-//     ];
-//     convertor.extend_whitelisted_tokens(&owner, whitelist_tokens.clone());
-//     let token_contracts = whitelist_tokens
-//         .iter()
-//         .map(|e| Nep141 {
-//             contract: deploy_test_token_contract(
-//                 &root,
-//                 e.token_id.clone(),
-//                 vec![
-//                     convertor_contract_id(),
-//                     string_to_account("creator"),
-//                     string_to_account("user"),
-//                 ],
-//             ),
-//         })
-//         .collect_vec();
-//
-//     return (
-//         root,
-//         owner,
-//         convertor,
-//         creator,
-//         user,
-//         whitelist_tokens,
-//         token_contracts,
-//     );
-// }
+use anyhow::anyhow;
+use itertools::Itertools;
+use near_sdk::json_types::U128;
+use near_sdk::{AccountId, Balance, serde_json};
+use near_sdk::serde_json::json;
+use near_units::parse_near;
+use workspaces::result::CallExecutionDetails;
+use nep141_token_convertor_contract::account::AccountView;
+use nep141_token_convertor_contract::constants::T_GAS_FOR_RESOLVE_TRANSFER;
+use nep141_token_convertor_contract::conversion_pool::ConversionPool;
+use nep141_token_convertor_contract::types::PoolId;
+use nep141_token_convertor_contract::FtMetaData;
+use workspaces::Account;
+use crate::common::constant::{CONVERTOR_CONTRACT, CONVERTOR_CONTRACT_ACCOUNT, CONVERTOR_OWNER_ACCOUNT, CREATOR_ACCOUNT, ROOT, USDC_ACCOUNT, USDN_ACCOUNT, USDT_ACCOUNT, USER_ACCOUNT, WORKER};
+use crate::common::nep141::Nep141;
+
+pub struct ConvertorContract {
+    pub contract_id: workspaces::AccountId,
+}
+
+impl ConvertorContract {
+    pub async fn get_account(&self, account_id: AccountId) -> AccountView {
+        WORKER.get().await.view(
+            &self.contract_id,
+            "get_account",
+            json!((account_id)).to_string()
+                .into_bytes())
+            .await.unwrap()
+            .json().unwrap()
+    }
+
+    pub async fn get_storage_fee_gap_of(&self, account_id: &workspaces::AccountId) -> U128 {
+        WORKER.get().await.view(
+            &self.contract_id,
+            "get_storage_fee_gap_of",
+            serde_json::json!({"account_id": account_id}).to_string().into_bytes()
+        ).await.unwrap().json().unwrap()
+    }
+
+    pub async fn get_pools(&self, from_index: u32, limit: u32) -> Vec<ConversionPool> {
+        WORKER.get().await.view(
+            &self.contract_id,
+            "get_pools",
+            json!((from_index,limit)).to_string().into_bytes())
+            .await.unwrap()
+            .json()
+            .unwrap()
+    }
+
+    pub async fn get_whitelist(&self) -> Vec<FtMetaData> {
+        WORKER.get().await.view(
+            &self.contract_id,
+            "get_whitelist",
+            json!(()).to_string().into_bytes()
+        ).await.unwrap().json().unwrap()
+    }
+
+    pub async fn extend_whitelisted_tokens(
+        &self,
+        signer: &workspaces::Account,
+        tokens: Vec<FtMetaData>,
+    ) -> anyhow::Result<CallExecutionDetails> {
+
+        let worker = WORKER.get().await;
+        signer
+            .call(worker, &self.contract_id, "extend_whitelisted_tokens")
+            .args_json(json!({"tokens": tokens}))?
+            .transact()
+            .await
+    }
+
+    pub async fn remove_whitelisted_tokens(
+        &self,
+        signer: &Account,
+        tokens: Vec<near_sdk::AccountId>,
+    ) -> anyhow::Result<CallExecutionDetails> {
+        let worker = WORKER.get().await;
+        signer
+            .call(worker, &self.contract_id, "remove_whitelisted_tokens")
+            .args_json(json!({"tokens": tokens}))?
+            .transact()
+            .await
+    }
+
+    pub async fn set_deposit_amount_of_pool_creation(
+        &self,
+        signer: &Account,
+        amount: U128,
+    ) -> anyhow::Result<CallExecutionDetails> {
+        let worker = WORKER.get().await;
+        signer
+            .call(worker, &self.contract_id, "set_deposit_amount_of_pool_creation")
+            .args_json(json!({"amount": amount}))?
+            .transact()
+            .await
+    }
+
+    pub async fn create_pool(
+        &self,
+        signer: &Account,
+        token_from: AccountId,
+        token_to: AccountId,
+        is_reversible: bool,
+        in_token_rate: u32,
+        out_token_rate: u32,
+        attach: Option<Balance>,
+    ) -> anyhow::Result<CallExecutionDetails> {
+        let worker = WORKER.get().await;
+        signer
+            .call(worker, &self.contract_id, "create_pool")
+            .deposit(attach.unwrap_or(0))
+            .args_json(json!((
+                token_from,
+                token_to,
+                is_reversible,
+                in_token_rate,
+                out_token_rate,
+            )))?
+            .transact()
+            .await
+    }
+
+    pub async fn register_account(&self, signer: &Account) -> anyhow::Result<CallExecutionDetails> {
+        let storage_fee = self.get_storage_fee_gap_of(signer.id()).await.0;
+        let worker = WORKER.get().await;
+        signer
+            .call(worker, &self.contract_id, "storage_deposit")
+            .deposit(storage_fee)
+            .args_json(json!({}))?
+            .transact()
+            .await
+    }
+
+    pub async fn withdraw_token_in_pool(
+        &self,
+        signer: &Account,
+        pool_id: PoolId,
+        token_id: AccountId,
+        amount: Option<U128>,
+    ) -> anyhow::Result<CallExecutionDetails> {
+        let worker = WORKER.get().await;
+        signer
+            .call(worker, &self.contract_id, "withdraw_token_in_pool")
+            .deposit(1)
+            .max_gas()
+            .args_json(json!({
+                "pool_id": pool_id,
+                "token_id": token_id,
+                "amount": amount
+            }))?
+            .transact()
+            .await
+    }
+
+    pub async fn delete_pool(&self, signer: &Account, pool_id: PoolId) -> anyhow::Result<CallExecutionDetails> {
+        let worker = WORKER.get().await;
+        signer
+            .call(worker, &self.contract_id, "delete_pool")
+            .deposit(1)
+            .max_gas()
+            .args_json(json!({"pool_id": pool_id}))?
+            .transact()
+            .await
+    }
+}
