@@ -1,44 +1,51 @@
-use std::future::Future;
 use futures;
 use near_sdk::serde_json::json;
 use near_units::parse_near;
-use workspaces::Account;
-use workspaces::result::CallExecutionDetails;
+use workspaces::{Account, Worker};
+use workspaces::network::Sandbox;
 use nep141_token_convertor_contract::FtMetaData;
 use crate::common::nep141::Nep141;
-use crate::common::constant::{CONVERTOR_OWNER_ACCOUNT, CONVERTOR_CONTRACT, CREATOR_ACCOUNT, ROOT, TEST_TOKEN_WASM_BYTES, USDC_ACCOUNT, USDN_ACCOUNT, USDT_ACCOUNT, USER_ACCOUNT, WORKER, INIT_TEST_TOKENS};
+use crate::common::convertor::ConvertorContract;
 
-async fn join_parallel<T: Send + 'static>(
-    futs: impl IntoIterator<Item = impl Future<Output = T> + Send + 'static>,
-) -> Vec<T> {
-    let tasks: Vec<_> = futs.into_iter().map(tokio::spawn).collect();
-    // unwrap the Result because it is introduced by tokio::spawn()
-    // and isn't something our caller can handle
-    futures::future::join_all(tasks)
-        .await
-        .into_iter()
-        .map(Result::unwrap)
-        .collect()
+pub const CONVERTOR_WASM_BYTES: &[u8] = include_bytes!("../../../res/nep141_token_convertor_contract.wasm");
+pub const TEST_TOKEN_WASM_BYTES: &[u8] = include_bytes!("../../../res/test_token.wasm");
+
+pub async fn register_account(worker: &Worker<Sandbox>, root: &Account, name: &str) -> Account {
+    let tt = root.create_subaccount(worker, name)
+        .initial_balance(parse_near!("100 N"))
+        .transact().await;
+    tt.unwrap()
+        .into_result().unwrap()
 }
 
 pub async fn setup_pools() -> (
+    Worker<Sandbox>,
     Vec<FtMetaData>,
     Vec<Nep141>,
+    ConvertorContract,
+    Account, Account, Account, Account,
 ) {
-    let (root, owner, creator, user) = setup_convertor_contract_roles().await;
-    // let creator = root.create_user(string_to_account("creator"), to_yocto("100"));
-    // let user = root.create_user(string_to_account("user"), to_yocto("100"));
+    let worker = workspaces::sandbox().await.unwrap();
+    let root = worker.root_account();
 
-    INIT_TEST_TOKENS.get().await;
+    let owner = register_account(&worker, &root, "owner" ).await;
+    let creator = register_account(&worker, &root, "creator" ).await;
+    let user = register_account(&worker, &root, "user" ).await;
+    let convertor = register_account(&worker, &root, "convertor" ).await;
 
-    let convertor_contract = CONVERTOR_CONTRACT.get().await;
+    let accounts_to_register = vec![
+        convertor.id().to_string(),
+        creator.id().to_string(),
+        user.id().to_string()
+    ];
 
-    convertor_contract.register_account(&user).await.unwrap();
-    convertor_contract.register_account(&creator).await.unwrap();
+    let usdt = register_account(&worker, &root, "usdt").await;
+    let usdc = register_account(&worker, &root, "usdc").await;
+    let usdn = register_account(&worker, &root, "usdn").await;
 
-    let usdt = USDT_ACCOUNT.get().await;
-    let usdc = USDC_ACCOUNT.get().await;
-    let usdn = USDN_ACCOUNT.get().await;
+    deploy_test_token_contract(&worker, &usdt, accounts_to_register.clone()).await;
+    deploy_test_token_contract(&worker, &usdc, accounts_to_register.clone()).await;
+    deploy_test_token_contract(&worker, &usdn, accounts_to_register.clone()).await;
 
     let whitelist_tokens = vec![
         FtMetaData {
@@ -54,54 +61,46 @@ pub async fn setup_pools() -> (
             decimals: 6,
         },
     ];
-    convertor_contract.extend_whitelisted_tokens(&owner, whitelist_tokens.clone()).await.unwrap();
+
+    let convertor_contract = ConvertorContract::deploy(&worker, &convertor, &owner).await;
+    convertor_contract.extend_whitelisted_tokens(&worker, &owner, whitelist_tokens.clone()).await.unwrap();
+
+    convertor_contract.register_account(&worker, &user).await.unwrap();
+    convertor_contract.register_account(&worker, &creator).await.unwrap();
 
     let token_contracts = vec![
-        Nep141{ account: usdt, contract_id: usdt.id().clone() },
-        Nep141{ account: usdc, contract_id: usdc.id().clone() },
-        Nep141{ account: usdn, contract_id: usdn.id().clone() },
+        Nep141{  contract_id: usdt.id().clone(), account: usdt},
+        Nep141{  contract_id: usdc.id().clone(),account: usdc},
+        Nep141{  contract_id: usdn.id().clone(),account: usdn},
     ];
-
     return (
+        worker,
         whitelist_tokens,
         token_contracts,
+        convertor_contract,
+        root, owner, creator, user,
     );
 }
 
 
-
 pub async fn deploy_test_token_contract(
-    signer_account: &'static workspaces::Account,
+    worker: &Worker<Sandbox>,
+    signer_account: &workspaces::Account,
     accounts_to_register: Vec<String>,
 ) {
-    let worker = WORKER.get().await;
     signer_account.deploy(worker,TEST_TOKEN_WASM_BYTES).await.unwrap();
     signer_account.call(worker,signer_account.id(),"new")
         .args_json(())
         .unwrap().transact().await.unwrap();
-    join_parallel(accounts_to_register.into_iter().map(|account_id| async move {
-        signer_account.call(worker,signer_account.id(),"storage_deposit")
+
+    let mut i = 0 ;
+    loop {
+        let account_id = accounts_to_register[i].clone();
+        let result = signer_account.call(worker,signer_account.id(),"storage_deposit")
             .deposit(parse_near!("0.00125 N"))
             .args_json(json!({"account_id": account_id})).unwrap()
             .transact().await.unwrap();
-    })).await;
-}
-
-pub async fn setup_convertor_contract_roles()
-    -> (&'static Account, &'static Account, &'static Account, &'static Account) {
-    let root = ROOT.get().await;
-    let owner = CONVERTOR_OWNER_ACCOUNT.get().await;
-    let creator = CREATOR_ACCOUNT.get().await;
-    let user = USER_ACCOUNT.get().await;
-    return (root,owner,creator,user)
-}
-
-trait Print {
-    fn print(&self);
-}
-
-impl Print for CallExecutionDetails {
-    fn print(&self) {
-        println!("{:?}", self)
+        i+=1;
+        if i==accounts_to_register.len() {break;}
     }
 }
