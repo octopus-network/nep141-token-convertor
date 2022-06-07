@@ -367,7 +367,7 @@ impl PoolCreatorAction for TokenConvertor {
         }
         .emit();
         // pool should finish withdraw here
-        if withdraw_amount> 0 {
+        if withdraw_amount > 0 {
             self.internal_send_tokens(&creator, &token_id, withdraw_amount);
         }
     }

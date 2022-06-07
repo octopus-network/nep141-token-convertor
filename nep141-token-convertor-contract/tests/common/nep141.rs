@@ -1,8 +1,8 @@
 use near_sdk::json_types::U128;
 use near_sdk::serde_json::json;
-use workspaces::{AccountId, Account, Worker};
 use workspaces::network::Sandbox;
 use workspaces::result::CallExecutionDetails;
+use workspaces::{Account, AccountId, Worker};
 
 pub struct Nep141 {
     pub account: workspaces::Account,
@@ -23,7 +23,7 @@ impl Nep141 {
             .call(worker, &self.contract_id, "ft_transfer_call")
             .deposit(1)
             .max_gas()
-            .args_json(json!((receiver_id,amount,memo,msg)))?
+            .args_json(json!((receiver_id, amount, memo, msg)))?
             .transact()
             .await
     }
@@ -42,14 +42,16 @@ impl Nep141 {
             .await
     }
 
-    pub async fn ft_balance_of(&self, worker: &Worker<Sandbox>,account_id: AccountId) -> U128 {
-        let result = worker.view(
-            &self.contract_id,
-            "ft_balance_of",
-            json!({"account_id": account_id}).to_string().into_bytes())
+    pub async fn ft_balance_of(&self, worker: &Worker<Sandbox>, account_id: AccountId) -> U128 {
+        let result = worker
+            .view(
+                &self.contract_id,
+                "ft_balance_of",
+                json!({ "account_id": account_id }).to_string().into_bytes(),
+            )
             .await;
-           let a =  result.unwrap();
-            a.json().unwrap()
+        let a = result.unwrap();
+        a.json().unwrap()
     }
 
     pub async fn storage_deposit(
@@ -58,14 +60,16 @@ impl Nep141 {
         signer: &workspaces::Account,
         account_id: Option<AccountId>,
         registration_only: Option<bool>,
-        amount: u128
-    )-> CallExecutionDetails {
+        amount: u128,
+    ) -> CallExecutionDetails {
         let result = signer
-            .call(worker,&self.contract_id, "storage_deposit")
+            .call(worker, &self.contract_id, "storage_deposit")
             .deposit(amount)
-            .args_json(json!((account_id,registration_only))).unwrap()
-            .transact().await.unwrap();
+            .args_json(json!((account_id, registration_only)))
+            .unwrap()
+            .transact()
+            .await
+            .unwrap();
         result
-
     }
 }
