@@ -6,7 +6,6 @@ pub mod contract_interfaces;
 pub mod contract_viewers;
 pub mod conversion_pool;
 pub mod events;
-pub mod external_trait;
 pub mod owner;
 pub mod storage_impl;
 pub mod token_receiver;
@@ -21,8 +20,8 @@ use near_sdk::collections::{LookupMap, UnorderedMap};
 use near_sdk::json_types::U128;
 use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::{
-    env, ext_contract, log, near_bindgen, serde_json, AccountId, Balance, BorshStorageKey, Gas,
-    PanicOnDefault, Promise, PromiseOrValue, PromiseResult,
+    env, log, near_bindgen, serde_json, AccountId, Balance, BorshStorageKey, Gas, PanicOnDefault,
+    Promise, PromiseOrValue, PromiseResult,
 };
 use types::PoolId;
 
@@ -105,10 +104,6 @@ pub mod test {
     use near_sdk::test_utils::{accounts, VMContextBuilder};
     use near_sdk::{testing_env, AccountId};
     use std::convert::TryFrom;
-
-    pub fn string_to_account(name: &str) -> AccountId {
-        AccountId::try_from(name.to_string()).unwrap()
-    }
 
     pub fn usdt() -> AccountId {
         AccountId::new_unchecked("usdt".to_string())

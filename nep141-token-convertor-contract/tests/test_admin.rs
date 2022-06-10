@@ -1,68 +1,95 @@
-pub use crate::common::constant::string_to_account;
-pub use crate::common::contracts::{deploy_convertor_contract, setup_convertor_contract};
-pub use common::convertor::Convertor;
 use near_sdk::json_types::U128;
-pub use near_sdk::AccountId;
-pub use near_sdk_sim::{call, deploy, init_simulator, to_yocto, view, ContractAccount};
 use nep141_token_convertor_contract::FtMetaData;
+use workspaces::prelude::*;
+
+use crate::common::utils::setup_pools;
 
 mod common;
 
-#[test]
-fn test_whitelist() {
-    let (root, owner, convertor) = setup_convertor_contract();
+#[tokio::test]
+async fn test_whitelist() {
+    let (worker, whitelist_tokens, token_contracts, convertor_contract, root, owner, creator, user) =
+        setup_pools().await;
+
+    let usdt_id = whitelist_tokens[0].token_id.clone();
+    let usdc_id = whitelist_tokens[1].token_id.clone();
+    let usdn_id = whitelist_tokens[2].token_id.clone();
+
+    let mut tokens: Vec<FtMetaData> = whitelist_tokens
+        .iter()
+        .map(|e| FtMetaData {
+            token_id: e.token_id.clone(),
+            decimals: 6,
+        })
+        .collect();
+    tokens[2].decimals = 8;
+
     let mut tokens = vec![
         FtMetaData {
-            token_id: string_to_account("usdt"),
+            token_id: usdt_id.clone(),
             decimals: 6,
         },
         FtMetaData {
-            token_id: string_to_account("usdc"),
+            token_id: usdc_id.clone(),
             decimals: 6,
         },
         FtMetaData {
-            token_id: string_to_account("usdn"),
+            token_id: usdn_id.clone(),
             decimals: 8,
         },
     ];
-    convertor
-        .extend_whitelisted_tokens(&owner, tokens.clone())
-        .assert_success();
+    convertor_contract
+        .extend_whitelisted_tokens(&worker, &owner, tokens.clone())
+        .await
+        .unwrap();
     assert_eq!(
-        convertor.get_whitelist(),
+        convertor_contract.get_whitelist(&worker).await,
         tokens,
         "extend whitelist not right "
     );
 
     tokens.pop();
     tokens.pop();
-    let remove_token_ids = vec![string_to_account("usdn"), string_to_account("usdc")];
-    convertor.remove_whitelisted_tokens(&owner, remove_token_ids.clone());
-    assert_eq!(convertor.get_whitelist(), tokens, "remove token not right");
+    let remove_token_ids = vec![usdn_id.clone(), usdc_id.clone()];
+    convertor_contract
+        .remove_whitelisted_tokens(&worker, &owner, remove_token_ids.clone())
+        .await
+        .unwrap();
+    assert_eq!(
+        convertor_contract.get_whitelist(&worker).await,
+        tokens,
+        "remove token not right"
+    );
     assert!(
-        !convertor
-            .extend_whitelisted_tokens(&root, tokens.clone())
-            .is_ok(),
+        convertor_contract
+            .extend_whitelisted_tokens(&worker, &root, tokens.clone())
+            .await
+            .is_err(),
         "should failed by owner access check"
     );
     assert!(
-        !convertor
-            .remove_whitelisted_tokens(&root, remove_token_ids.clone())
-            .is_ok(),
+        convertor_contract
+            .remove_whitelisted_tokens(&worker, &root, remove_token_ids.clone())
+            .await
+            .is_err(),
         "should failed by owner access check"
     )
 }
 
-#[test]
-fn test_set_pool_create_deposit_amount() {
-    let (root, owner, convertor) = setup_convertor_contract();
+#[tokio::test]
+async fn test_set_pool_create_deposit_amount() {
+    let (worker, whitelist_tokens, token_contracts, convertor_contract, root, owner, creator, user) =
+        setup_pools().await;
+
     assert!(
-        !convertor
-            .set_pool_create_deposit_amount(&root, U128::from(1))
-            .is_ok(),
+        convertor_contract
+            .set_deposit_amount_of_pool_creation(&worker, &root, U128::from(1))
+            .await
+            .is_err(),
         "should failed by owner access check"
     );
-    convertor
-        .set_pool_create_deposit_amount(&owner, U128::from(1))
-        .assert_success();
+    convertor_contract
+        .set_deposit_amount_of_pool_creation(&worker, &owner, U128::from(1))
+        .await
+        .unwrap();
 }
